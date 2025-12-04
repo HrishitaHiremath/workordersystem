@@ -1069,6 +1069,9 @@
             configureUIForRole();
             await initializeForm();
             loadAutoExportPreference();
+            
+            await fetchNotificationsFromCloud();
+            
             updateDashboardMetrics();
             updateCharts();
             updateStorageInfo();
@@ -2491,6 +2494,69 @@
                 }
             }, 5000);
         }
+        
+        // NEW: Function to download data from Supabase
+async function fetchNotificationsFromCloud() {
+    console.log('☁️ Attempting to fetch from cloud...');
+    
+    try {
+        const { data, error } = await supabaseClient
+            .from('job_requests')
+            .select('*');
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            console.log(`☁️ Downloaded ${data.length} records from Supabase`);
+
+            // Map Supabase (snake_case) columns back to App (camelCase) format
+            const cloudNotifications = data.map(record => ({
+                id: record.local_id ? parseInt(record.local_id) : record.id, // Prefer local_id if it exists
+                date: record.date,
+                userId: record.user_id,
+                department: record.department,
+                section: record.section,
+                component: record.component,
+                componentSection: record.component_section,
+                equipmentName: record.equipment_name,
+                sapId: record.sap_id,
+                category: record.category,
+                jobType: record.job_type,
+                technique: record.technique,
+                expectedFinishDate: record.expected_finish_date,
+                status: record.status,
+                priority: record.priority,
+                description: record.description,
+                createdAt: record.created_at,
+                // Handle optional history if you added it to DB, otherwise keep empty
+                statusHistory: [] 
+            }));
+
+            // UPDATE APP STATE
+            notifications = cloudNotifications;
+            
+            // Save to this browser's local storage so it works offline next time
+            saveNotificationsToLocal(); 
+            
+            // Refresh the UI
+            updateDashboardMetrics();
+            updateCharts();
+            
+            // If we are on the notifications page, refresh the list
+            if (document.getElementById('notifications-page').classList.contains('active')) {
+                loadNotificationsPage();
+            }
+
+            showToast('☁️ Data synced from Cloud!', 'success');
+        } else {
+            console.log('☁️ No data found in cloud.');
+        }
+
+    } catch (err) {
+        console.error('Error fetching from cloud:', err);
+        showToast('⚠️ Could not download cloud data', 'warning');
+    }
+}
 
         // Initialize app on page load
         document.addEventListener('DOMContentLoaded', async function() {
