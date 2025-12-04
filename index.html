@@ -1,0 +1,2517 @@
+
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Work Order Notification System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { 
+            font-family: 'Inter', sans-serif; 
+            box-sizing: border-box;
+        }
+        
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        .nav-item.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .notification-enter {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .notification-exit {
+            animation: slideOut 0.3s ease-in forwards;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+
+        .file-upload-area {
+            border: 2px dashed #d1d5db;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload-area:hover {
+            border-color: #6366f1;
+            background-color: #f8fafc;
+        }
+        
+        .file-upload-area.dragover {
+            border-color: #6366f1;
+            background-color: #eef2ff;
+        }
+
+        .sidebar {
+            background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%);
+        }
+
+        .login-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .hidden-for-user {
+            display: none;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .saving-pulse {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+    </style>
+  <style>@view-transition { navigation: auto; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+  <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
+ </head>
+ <body class="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen"><!-- Save Indicator (Fixed top-right) -->
+  <div id="save-indicator-container" class="fixed top-4 right-4 z-50 bg-white px-4 py-2 rounded-lg shadow-lg border hidden">
+   <div id="save-indicator" class="text-sm font-medium">
+    ✅ All changes saved
+   </div>
+   <div id="last-save-time" class="text-xs text-gray-500 mt-1"></div>
+  </div><!-- Login Page -->
+  <div id="login-page" class="page active">
+   <div class="min-h-screen flex items-center justify-center login-container">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+     <div class="text-center mb-8">
+      <div class="text-6xl mb-4">
+       🔧
+      </div>
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">Work Order System</h1>
+      <p class="text-gray-600">Please sign in to continue</p>
+     </div>
+     <form id="login-form" onsubmit="handleLogin(event)">
+      <div class="space-y-6">
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Username</label> <input type="text" id="username" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter your username">
+       </div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Password</label> <input type="password" id="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter your password">
+       </div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Role</label> <select id="role" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"> <option value="">Select Role</option> <option value="user">User</option> <option value="admin">Administrator</option> </select>
+       </div><button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition-all transform hover:scale-105"> Sign In </button>
+      </div>
+     </form>
+     <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+      <h3 class="font-semibold text-blue-800 mb-2">Demo Credentials:</h3>
+      <div class="text-sm text-blue-700 space-y-1">
+       <div>
+        <strong>Admin:</strong> admin / admin123
+       </div>
+       <div>
+        <strong>User:</strong> user / user123
+       </div>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div><!-- Navigation Sidebar -->
+  <div id="main-sidebar" class="fixed left-0 top-0 h-full w-64 sidebar text-white z-30 hidden">
+   <div class="p-6">
+    <div class="flex items-center justify-between mb-8">
+     <h1 class="text-xl font-bold">🔧 Work Order System</h1><button onclick="logout()" class="text-white hover:text-red-300 transition-colors" title="Logout">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+      </svg></button>
+    </div>
+    <nav class="space-y-2"><a href="#" onclick="showPage('dashboard')" class="nav-item flex items-center p-3 rounded-lg hover:bg-white hover:bg-opacity-10 transition-all active" id="nav-dashboard">
+      <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+      </svg> Dashboard </a> <a href="#" onclick="showPage('create')" class="nav-item flex items-center p-3 rounded-lg hover:bg-white hover:bg-opacity-10 transition-all" id="nav-create">
+      <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+      </svg> Create Job Request </a> <a href="#" onclick="showPage('notifications')" class="nav-item flex items-center p-3 rounded-lg hover:bg-white hover:bg-opacity-10 transition-all" id="nav-notifications">
+      <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+      </svg><span id="nav-notifications-text">My Job Requests</span> <span id="notification-badge" class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">0</span> </a> <a href="#" onclick="showPage('data')" class="nav-item flex items-center p-3 rounded-lg hover:bg-white hover:bg-opacity-10 transition-all" id="nav-data">
+      <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+      </svg> Data Management </a>
+    </nav>
+   </div><!-- User Info -->
+   <div class="absolute bottom-0 left-0 right-0 p-6 border-t border-white border-opacity-20">
+    <div class="flex items-center">
+     <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+      <svg class="w-6 h-6" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+      </svg>
+     </div>
+     <div class="ml-3">
+      <div class="text-sm font-medium" id="user-display-name">
+       User
+      </div>
+      <div class="text-xs opacity-75" id="user-display-role">
+       Role
+      </div>
+     </div>
+    </div>
+   </div>
+  </div><!-- Main Content Area -->
+  <div id="main-content" class="ml-64 min-h-screen hidden"><!-- Dashboard Page -->
+   <div id="dashboard-page" class="page active">
+    <div class="p-8">
+     <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">📊 Dashboard Overview</h1>
+      <p class="text-gray-600">Real-time insights into your job requests</p><!-- Dashboard Filters -->
+      <div class="mt-6 bg-white rounded-xl shadow-lg p-6">
+       <h3 class="text-lg font-semibold text-gray-800 mb-4">📋 Filters</h3>
+       <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Status</label> <select id="filter-status" onchange="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"> <option value="">All Status</option> <option value="Open">Open</option> <option value="Planned">Planned</option> <option value="Completed">Completed</option> </select>
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Priority</label> <select id="filter-priority" onchange="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"> <option value="">All Priorities</option> <option value="critical">Critical</option> <option value="high">High</option> <option value="medium">Medium</option> <option value="low">Low</option> </select>
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Department</label> <select id="filter-department" onchange="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"> <option value="">All Departments</option> </select>
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Job Type</label> <select id="filter-job-type" onchange="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"> <option value="">All Job Types</option> <option value="Breakdown">Breakdown</option> <option value="Need Base">Need Base</option> <option value="Shutdown">Shutdown</option> </select>
+        </div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Date Range</label> <select id="filter-date-range" onchange="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"> <option value="">All Time</option> <option value="today">Today</option> <option value="week">This Week</option> <option value="month">This Month</option> <option value="overdue">Overdue Only</option> </select>
+        </div>
+        <div class="flex items-end"><button onclick="clearFilters()" class="w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"> Clear Filters </button>
+        </div>
+       </div><!-- Active Filters Display -->
+       <div id="active-filters" class="mt-4 flex flex-wrap gap-2"></div>
+      </div>
+     </div><!-- Key Metrics -->
+     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
+       <div class="flex items-center justify-between">
+        <div>
+         <div class="text-2xl font-bold text-gray-800" id="total-notifications">
+          0
+         </div>
+         <div class="text-sm text-gray-600">
+          Total Notifications
+         </div>
+        </div>
+        <div class="text-blue-500">
+         <svg class="w-8 h-8" fill="currentColor" viewbox="0 0 20 20"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+         </svg>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+       <div class="flex items-center justify-between">
+        <div>
+         <div class="text-2xl font-bold text-gray-800" id="completion-rate">
+          0%
+         </div>
+         <div class="text-sm text-gray-600">
+          Completion Rate
+         </div>
+        </div>
+        <div class="text-green-500">
+         <svg class="w-8 h-8" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+         </svg>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
+       <div class="flex items-center justify-between">
+        <div>
+         <div class="text-2xl font-bold text-gray-800" id="avg-response-time">
+          0h
+         </div>
+         <div class="text-sm text-gray-600">
+          Avg Response Time
+         </div>
+        </div>
+        <div class="text-orange-500">
+         <svg class="w-8 h-8" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+         </svg>
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
+       <div class="flex items-center justify-between">
+        <div>
+         <div class="text-2xl font-bold text-gray-800" id="critical-alerts">
+          0
+         </div>
+         <div class="text-sm text-gray-600">
+          Critical Alerts
+         </div>
+        </div>
+        <div class="text-red-500">
+         <svg class="w-8 h-8" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+         </svg>
+        </div>
+       </div>
+      </div>
+     </div><!-- Additional KPI Row -->
+     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+       <div class="flex items-center justify-between">
+        <div>
+         <div class="text-2xl font-bold text-gray-800" id="open-notifications">
+          0
+         </div>
+         <div class="text-sm text-gray-600">
+          Open
+         </div>
+        </div>
+        <div class="text-purple-500">
+         🔓
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+       <div class="flex items-center justify-between">
+        <div>
+         <div class="text-2xl font-bold text-gray-800" id="planned-notifications">
+          0
+         </div>
+         <div class="text-sm text-gray-600">
+          Planned
+         </div>
+        </div>
+        <div class="text-purple-500">
+         📋
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500">
+       <div class="flex items-center justify-between">
+        <div>
+         <div class="text-2xl font-bold text-gray-800" id="overdue-notifications">
+          0
+         </div>
+         <div class="text-sm text-gray-600">
+          Overdue
+         </div>
+        </div>
+        <div class="text-indigo-500">
+         ⏰
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-teal-500">
+       <div class="flex items-center justify-between">
+        <div>
+         <div class="text-2xl font-bold text-gray-800" id="this-week-notifications">
+          0
+         </div>
+         <div class="text-sm text-gray-600">
+          This Week
+         </div>
+        </div>
+        <div class="text-teal-500">
+         📅
+        </div>
+       </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-pink-500">
+       <div class="flex items-center justify-between">
+        <div>
+         <div class="text-2xl font-bold text-gray-800" id="avg-completion-days">
+          0
+         </div>
+         <div class="text-sm text-gray-600">
+          Avg Days to Complete
+         </div>
+        </div>
+        <div class="text-pink-500">
+         📊
+        </div>
+       </div>
+      </div>
+     </div><!-- Charts Section -->
+     <div class="grid md:grid-cols-2 gap-8 mb-8"><!-- Priority Distribution Chart -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+       <h3 class="text-lg font-semibold text-gray-800 mb-4">Priority Distribution</h3>
+       <div class="relative h-64">
+        <canvas id="priorityChart"></canvas>
+       </div>
+      </div><!-- Status Trend Chart -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+       <h3 class="text-lg font-semibold text-gray-800 mb-4">Status Overview</h3>
+       <div class="relative h-64">
+        <canvas id="statusChart"></canvas>
+       </div>
+      </div>
+     </div><!-- Department Performance -->
+     <div class="grid md:grid-cols-2 gap-8 mb-8"><!-- Department Workload -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+       <h3 class="text-lg font-semibold text-gray-800 mb-4">Department Workload</h3>
+       <div id="department-stats" class="space-y-3"><!-- Department stats will be populated here -->
+       </div>
+      </div><!-- Technique Usage -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+       <h3 class="text-lg font-semibold text-gray-800 mb-4">Most Used Techniques</h3>
+       <div id="technique-stats" class="space-y-3"><!-- Technique stats will be populated here -->
+       </div>
+      </div>
+     </div><!-- Recent Activity -->
+     <div class="bg-white rounded-xl shadow-lg p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Recent Activity</h3>
+      <div id="recent-activity" class="space-y-3"><!-- Recent activity will be populated here -->
+      </div>
+     </div>
+    </div>
+   </div><!-- Create Notification Page -->
+   <div id="create-page" class="page">
+    <div class="p-8">
+     <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">➕ Create Job Request</h1>
+      <p class="text-gray-600">Fill out the form below to create a new job request</p>
+     </div>
+     <div class="bg-white rounded-xl shadow-lg p-8">
+      <div class="grid md:grid-cols-2 gap-6"><!-- Date -->
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Date *</label> <input type="date" id="date-input" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+       </div><!-- User ID -->
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">User ID *</label> <input type="text" id="user-id-input" placeholder="Enter User ID" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+       </div><!-- Department -->
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Department *</label> <select id="department-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"> <option value="">Select Department</option> </select>
+       </div><!-- Section -->
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Section *</label> <select id="section-select" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100"> <option value="">Select Section</option> </select> <input type="text" id="section-custom-input" placeholder="Enter custom section name..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent mt-2 hidden">
+       </div><!-- Component -->
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Component *</label> <select id="component-select" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100"> <option value="">Select Component</option> </select> <input type="text" id="component-custom-input" placeholder="Enter custom component name..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent mt-2 hidden">
+       </div><!-- Component Section -->
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Component Section *</label> <select id="component-section-select" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100"> <option value="">Select Component Section</option> </select> <input type="text" id="component-section-custom-input" placeholder="Enter custom component section name..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent mt-2 hidden">
+       </div><!-- Equipment -->
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Equipment *</label> <select id="equipment-select" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100"> <option value="">Select Equipment</option> </select> <input type="text" id="equipment-custom-input" placeholder="Enter custom equipment name..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent mt-2 hidden">
+       </div><!-- Equipment SAP ID -->
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Equipment SAP ID</label> <input type="text" id="sap-id-input" placeholder="Auto-filled when equipment selected" readonly class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600">
+       </div><!-- Manual SAP ID Input (appears when N/A detected) -->
+       <div id="manual-sap-container" class="col-span-2 hidden"><label class="block text-sm font-medium text-gray-700 mb-2"> <span class="text-red-600">⚠️</span> Manual SAP ID Entry <span class="text-sm text-red-600">(Required - SAP ID missing from database)</span> </label> <input type="text" id="manual-sap-input" placeholder="Enter SAP ID for this equipment" class="w-full px-4 py-3 border-2 border-yellow-400 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-yellow-50">
+        <div class="mt-2 flex items-center text-sm"><button type="button" id="save-sap-btn" onclick="saveManualSapId()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm mr-3"> 💾 Save to Database </button> <span class="text-gray-600">This will update the equipment database permanently</span>
+        </div>
+       </div><!-- Category -->
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Category *</label> <select id="category-select" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"> <option value="">Select Category</option> <option value="A+">A+</option> <option value="A">A</option> <option value="B">B</option> <option value="C">C</option> </select>
+       </div><!-- Type of Job -->
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Type of Job *</label> <select id="job-type-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"> <option value="">Select Job Type</option> <option value="Need Base">Need Base</option> <option value="Shutdown">Shutdown</option> <option value="Breakdown">Breakdown</option> </select>
+       </div><!-- Required Technique -->
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Required Technique *</label> <select id="technique-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"> <option value="">Select Technique</option> <option value="DP">DP</option> <option value="UT">UT</option> <option value="MPT">MPT</option> <option value="DP-UT">DP-UT</option> <option value="DP-UT-MPT">DP-UT-MPT</option> <option value="Flow Measurement">Flow Measurement</option> <option value="Laser Shaft Alignment">Laser Shaft Alignment</option> <option value="Vibration Checking">Vibration Checking</option> <option value="In-Situ Dynamic Balancing">In-Situ Dynamic Balancing</option> <option value="Thermography">Thermography</option> <option value="Ultrasonic Thickness Measurement">Ultrasonic Thickness Measurement</option> <option value="Rail UT">Rail UT</option> <option value="Wire Rope NDT">Wire Rope NDT</option> <option value="Others">Others</option> </select>
+       </div><!-- Expected Finish Date -->
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Expected Finish Date *</label> <input type="date" id="expected-finish-date-input" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+       </div><!-- Job Status -->
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Job Status *</label> <select id="status-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"> <option value="Open">Open</option> <option value="Planned" class="admin-only">Planned</option> <option value="Completed" class="admin-only">Completed</option> </select>
+       </div>
+      </div><!-- Description -->
+      <div class="mt-6"><label class="block text-sm font-medium text-gray-700 mb-2">Work Description *</label> <textarea id="description-input" rows="4" placeholder="Describe the work to be performed..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></textarea>
+      </div><!-- Priority Selector -->
+      <div class="mt-6"><label class="block text-sm font-medium text-gray-700 mb-3">Priority Level</label>
+       <div class="grid grid-cols-4 gap-2"><button type="button" onclick="setPriority('low')" id="priority-low" class="priority-btn px-4 py-2 rounded-lg border-2 border-green-200 bg-green-50 text-green-700 hover:bg-green-100 transition-all"> 🟢 Low </button> <button type="button" onclick="setPriority('medium')" id="priority-medium" class="priority-btn px-4 py-2 rounded-lg border-2 border-yellow-200 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-all"> 🟡 Medium </button> <button type="button" onclick="setPriority('high')" id="priority-high" class="priority-btn px-4 py-2 rounded-lg border-2 border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 transition-all"> 🟠 High </button> <button type="button" onclick="setPriority('critical')" id="priority-critical" class="priority-btn px-4 py-2 rounded-lg border-2 border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-all"> 🔴 Critical </button>
+       </div>
+      </div><!-- Actions -->
+      <div class="flex gap-4 mt-8"><button onclick="createNotification()" id="create-btn" class="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-all transform hover:scale-105"> <span class="flex items-center justify-center">
+         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+         </svg> Create Job Request </span> </button> <button onclick="clearForm()" class="bg-red-100 text-red-700 px-6 py-3 rounded-lg font-medium hover:bg-red-200 transition-all transform hover:scale-105">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+        </svg></button>
+      </div>
+     </div>
+    </div>
+   </div><!-- Notifications Page -->
+   <div id="notifications-page" class="page">
+    <div class="p-8">
+     <div class="mb-8 flex justify-between items-center">
+      <div>
+       <h1 class="text-3xl font-bold text-gray-800 mb-2" id="notifications-title">📋 My Job Requests</h1>
+       <p class="text-gray-600" id="notifications-subtitle">Manage and track your job requests</p>
+      </div><button onclick="exportToExcel()" class="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-all transform hover:scale-105 flex items-center gap-2">
+       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+       </svg> Export to Excel </button>
+     </div>
+     <div id="notifications-list" class="space-y-4"><!-- Notifications will be populated here -->
+     </div>
+    </div>
+   </div><!-- Data Management Page -->
+   <div id="data-page" class="page">
+    <div class="p-8">
+     <div class="mb-8">
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">💾 Data Management</h1>
+      <p class="text-gray-600">Export and import your job request data</p>
+     </div><!-- Auto-Export Toggle -->
+     <div class="mb-6 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl shadow-lg p-6 text-white">
+      <div class="flex items-center justify-between">
+       <div>
+        <h3 class="text-xl font-bold mb-2">🚀 Auto-Export to Excel</h3>
+        <p class="text-blue-100">Automatically download Excel backup after each save</p>
+       </div><label class="relative inline-flex items-center cursor-pointer"> <input type="checkbox" id="auto-export-toggle" onchange="toggleAutoExport()" class="sr-only peer">
+        <div class="w-14 h-7 bg-blue-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-green-400"></div></label>
+      </div>
+      <div id="auto-export-status" class="mt-3 text-sm bg-white bg-opacity-20 rounded-lg p-3 hidden"><span class="font-medium">✅ Auto-export enabled</span> - Excel files will download automatically after each change
+      </div>
+     </div>
+     <div class="grid md:grid-cols-2 gap-6"><!-- Export Section -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+       <div class="flex items-center mb-4">
+        <svg class="w-8 h-8 text-green-500 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <h3 class="text-xl font-semibold text-gray-800">Export to Excel</h3>
+       </div>
+       <p class="text-gray-600 mb-4">Download all your job requests as an Excel (.xlsx) file. Open directly in Excel, upload to SharePoint, or save to OneDrive.</p><button onclick="exportToExcel()" class="w-full px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-all transform hover:scale-105 mb-3">
+        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg> Download Excel File </button> <button onclick="exportNotificationsToFile()" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-all transform hover:scale-105">
+        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+        </svg> Download JSON Backup </button>
+       <div class="mt-4 p-3 bg-green-50 rounded-lg text-sm text-green-700"><strong>💡 Tip:</strong> Excel files can be directly opened in Excel and uploaded to SharePoint or OneDrive!
+       </div>
+      </div><!-- Import Section -->
+      <div class="bg-white rounded-xl shadow-lg p-6">
+       <div class="flex items-center mb-4">
+        <svg class="w-8 h-8 text-blue-500 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+        </svg>
+        <h3 class="text-xl font-semibold text-gray-800">Import Data</h3>
+       </div>
+       <p class="text-gray-600 mb-4">Load job requests from a previously exported JSON file. This will replace your current data.</p><input type="file" id="import-file-input" accept=".json" onchange="importNotificationsFromFile(event)" class="hidden"> <button onclick="document.getElementById('import-file-input').click()" class="w-full px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-all transform hover:scale-105">
+        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+        </svg> Choose JSON File to Import </button>
+       <div class="mt-4 p-3 bg-yellow-50 rounded-lg text-sm text-yellow-700"><strong>⚠️ Warning:</strong> Importing will replace all current data. Export your data first if you want to keep it.
+       </div>
+      </div>
+     </div><!-- Storage Info -->
+     <div class="mt-8 bg-white rounded-xl shadow-lg p-6">
+      <h3 class="text-xl font-semibold text-gray-800 mb-4">📊 Storage Information</h3>
+      <div class="grid md:grid-cols-3 gap-6">
+       <div class="p-4 bg-indigo-50 rounded-lg">
+        <div class="text-2xl font-bold text-indigo-600" id="stored-records">
+         0
+        </div>
+        <div class="text-sm text-indigo-700">
+         Total Records Stored
+        </div>
+       </div>
+       <div class="p-4 bg-purple-50 rounded-lg">
+        <div class="text-2xl font-bold text-purple-600" id="storage-size">
+         0 KB
+        </div>
+        <div class="text-sm text-purple-700">
+         Local Storage Used
+        </div>
+       </div>
+       <div class="p-4 bg-pink-50 rounded-lg">
+        <div class="text-2xl font-bold text-pink-600">
+         Browser
+        </div>
+        <div class="text-sm text-pink-700">
+         Storage Location
+        </div>
+       </div>
+      </div>
+      <div class="mt-4 p-4 bg-blue-50 rounded-lg">
+       <p class="text-sm text-blue-700"><strong>ℹ️ How it works:</strong> Your data is automatically saved to your browser's local storage every time you create or update a job request. The data persists even when you close your browser. Use the Export to Excel button to create backups you can upload to SharePoint or OneDrive.</p>
+      </div>
+     </div>
+    </div>
+   </div>
+  </div><!-- Notification Container -->
+  <div id="notification-container" class="fixed z-40"></div>
+  <script>
+        // Global variables
+        let currentUser = null;
+        let userRole = null;
+        let notifications = [];
+        let currentPriority = 'medium';
+        let autoExportEnabled = false;
+
+        // Supabase configuration
+        const SUPABASE_URL = 'https://ygutodotnycpiwpeblaq.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlndXRvZG90bnljcGl3cGVibGFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1NjI3NTUsImV4cCI6MjA2ODEzODc1NX0.l06WQ-AcBEeDV1IfQChiGhOz1tDw-MNr-jbMUGBFOTM';
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Equipment hierarchy data (will be loaded from Supabase)
+        let equipmentHierarchy = {};
+        let equipmentData = [];
+
+        // Enhanced local storage with multiple backup layers and persistent data
+        function saveNotificationsToLocal() {
+            try {
+                updateSaveIndicator('saving');
+                
+                const dataStr = JSON.stringify(notifications);
+                
+                // Primary storage
+                localStorage.setItem('workOrderNotifications', dataStr);
+                
+                // Backup storage (in case primary gets corrupted)
+                localStorage.setItem('workOrderNotifications_backup', dataStr);
+                
+                // Timestamp of last save
+                const timestamp = new Date().toISOString();
+                localStorage.setItem('workOrderNotifications_lastSave', timestamp);
+                
+                console.log('✅ Data saved successfully:', notifications.length, 'records');
+                console.log('📅 Last saved:', new Date(timestamp).toLocaleString());
+                
+                updateStorageInfo();
+                updateSaveIndicator('saved');
+                updateLastSaveTime(timestamp);
+                
+                // Auto-export to Excel if enabled
+                if (autoExportEnabled) {
+                    setTimeout(() => {
+                        exportToExcel(true); // true = silent mode
+                    }, 500);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error saving notifications:', error);
+                showToast('⚠️ Error saving data: ' + error.message, 'error');
+                updateSaveIndicator('error');
+            }
+        }
+
+        function loadNotificationsFromLocal() {
+            try {
+                // Try loading from primary storage
+                let saved = localStorage.getItem('workOrderNotifications');
+                
+                // If primary is empty or invalid, try backup
+                if (!saved || saved === '[]' || saved === 'null' || saved === '') {
+                    console.log('⚠️ Primary storage empty, checking backup...');
+                    saved = localStorage.getItem('workOrderNotifications_backup');
+                }
+                
+                if (saved && saved !== '[]' && saved !== 'null' && saved !== '') {
+                    notifications = JSON.parse(saved);
+                    console.log('✅ Successfully loaded', notifications.length, 'notifications');
+                    
+                    const lastSave = localStorage.getItem('workOrderNotifications_lastSave');
+                    if (lastSave) {
+                        console.log('📅 Last saved:', new Date(lastSave).toLocaleString());
+                        updateLastSaveTime(lastSave);
+                    }
+                    
+                    if (notifications.length > 0) {
+                        showToast(`✅ Loaded ${notifications.length} job requests from storage`, 'success');
+                    }
+                } else {
+                    console.log('ℹ️ No saved data found, starting fresh');
+                    notifications = [];
+                }
+            } catch (error) {
+                console.error('❌ Error loading notifications:', error);
+                showToast('⚠️ Error loading saved data: ' + error.message, 'error');
+                
+                // Try to recover from backup
+                try {
+                    const backup = localStorage.getItem('workOrderNotifications_backup');
+                    if (backup && backup !== '[]' && backup !== 'null') {
+                        notifications = JSON.parse(backup);
+                        console.log('✅ Recovered from backup:', notifications.length, 'records');
+                        showToast('✅ Data recovered from backup!', 'success');
+                    } else {
+                        notifications = [];
+                    }
+                } catch (backupError) {
+                    console.error('❌ Backup recovery failed:', backupError);
+                    notifications = [];
+                }
+            }
+        }
+
+        // Save indicator functions
+        function updateSaveIndicator(status) {
+            const container = document.getElementById('save-indicator-container');
+            const indicator = document.getElementById('save-indicator');
+            
+            if (!container || !indicator) return;
+            
+            container.classList.remove('hidden');
+            
+            if (status === 'saved') {
+                indicator.innerHTML = '✅ All changes saved';
+                indicator.className = 'text-green-600 text-sm font-medium';
+                container.classList.remove('saving-pulse');
+            } else if (status === 'saving') {
+                indicator.innerHTML = '💾 Saving...';
+                indicator.className = 'text-blue-600 text-sm font-medium';
+                container.classList.add('saving-pulse');
+            } else if (status === 'error') {
+                indicator.innerHTML = '⚠️ Save error - data in memory only';
+                indicator.className = 'text-red-600 text-sm font-medium';
+                container.classList.remove('saving-pulse');
+            }
+        }
+
+        function updateLastSaveTime(timestamp) {
+            const lastSaveElement = document.getElementById('last-save-time');
+            if (lastSaveElement && timestamp) {
+                lastSaveElement.textContent = 'Last saved: ' + new Date(timestamp).toLocaleString();
+            }
+        }
+
+        // Toggle auto-export
+        function toggleAutoExport() {
+            autoExportEnabled = document.getElementById('auto-export-toggle').checked;
+            localStorage.setItem('autoExportEnabled', autoExportEnabled);
+            
+            const statusDiv = document.getElementById('auto-export-status');
+            if (autoExportEnabled) {
+                statusDiv.classList.remove('hidden');
+                showToast('🚀 Auto-export enabled! Excel files will download automatically', 'success');
+            } else {
+                statusDiv.classList.add('hidden');
+                showToast('Auto-export disabled', 'info');
+            }
+        }
+
+        // Load auto-export preference
+        function loadAutoExportPreference() {
+            const saved = localStorage.getItem('autoExportEnabled');
+            if (saved === 'true') {
+                autoExportEnabled = true;
+                document.getElementById('auto-export-toggle').checked = true;
+                document.getElementById('auto-export-status').classList.remove('hidden');
+            }
+        }
+
+        // Export to Excel function
+        function exportToExcel(silent = false) {
+            try {
+                if (notifications.length === 0) {
+                    if (!silent) {
+                        showToast('❌ No data to export', 'warning');
+                    }
+                    return;
+                }
+
+                // Prepare data for Excel
+                const excelData = notifications.map(n => ({
+                    'ID': n.id,
+                    'Date': n.date,
+                    'User ID': n.userId,
+                    'Department': n.department,
+                    'Section': n.section,
+                    'Component': n.component,
+                    'Component Section': n.componentSection,
+                    'Equipment Name': n.equipmentName,
+                    'SAP ID': n.sapId,
+                    'Category': n.category,
+                    'Job Type': n.jobType,
+                    'Technique': n.technique,
+                    'Expected Finish Date': n.expectedFinishDate,
+                    'Status': n.status,
+                    'Priority': n.priority,
+                    'Description': n.description,
+                    'Created At': new Date(n.createdAt).toLocaleString(),
+                    'Last Updated': n.lastUpdated ? new Date(n.lastUpdated).toLocaleString() : 'N/A'
+                }));
+
+                // Create workbook and worksheet
+                const ws = XLSX.utils.json_to_sheet(excelData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Job Requests");
+
+                // Set column widths
+                ws['!cols'] = [
+                    { wch: 12 }, // ID
+                    { wch: 12 }, // Date
+                    { wch: 15 }, // User ID
+                    { wch: 15 }, // Department
+                    { wch: 15 }, // Section
+                    { wch: 15 }, // Component
+                    { wch: 18 }, // Component Section
+                    { wch: 20 }, // Equipment Name
+                    { wch: 15 }, // SAP ID
+                    { wch: 10 }, // Category
+                    { wch: 15 }, // Job Type
+                    { wch: 25 }, // Technique
+                    { wch: 18 }, // Expected Finish Date
+                    { wch: 12 }, // Status
+                    { wch: 10 }, // Priority
+                    { wch: 40 }, // Description
+                    { wch: 20 }, // Created At
+                    { wch: 20 }  // Last Updated
+                ];
+
+                // Generate filename with timestamp
+                const filename = `WorkOrders_${new Date().toISOString().split('T')[0]}_${new Date().getHours()}${new Date().getMinutes()}.xlsx`;
+
+                // Write file
+                XLSX.writeFile(wb, filename);
+
+                if (!silent) {
+                    showToast(`✅ Excel file exported successfully! (${notifications.length} records)`, 'success');
+                    console.log('📊 Excel exported:', filename);
+                }
+            } catch (error) {
+                console.error('❌ Error exporting to Excel:', error);
+                if (!silent) {
+                    showToast('⚠️ Error exporting to Excel: ' + error.message, 'error');
+                }
+            }
+        }
+
+        function exportNotificationsToFile() {
+            try {
+                const dataStr = JSON.stringify(notifications, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `work_orders_backup_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+                showToast('✅ JSON backup exported successfully!', 'success');
+            } catch (error) {
+                console.error('Error exporting:', error);
+                showToast('❌ Error exporting data: ' + error.message, 'error');
+            }
+        }
+
+        function importNotificationsFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        notifications = imported;
+                        saveNotificationsToLocal();
+                        updateDashboardMetrics();
+                        updateCharts();
+                        populateFilterDepartments();
+                        showToast(`✅ Imported ${imported.length} job requests successfully!`, 'success');
+                    } else {
+                        showToast('❌ Invalid file format', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error importing:', error);
+                    showToast('❌ Error importing file: ' + error.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            
+            // Reset file input
+            event.target.value = '';
+        }
+
+        function updateStorageInfo() {
+            const storedRecords = document.getElementById('stored-records');
+            const storageSize = document.getElementById('storage-size');
+            
+            if (storedRecords) {
+                storedRecords.textContent = notifications.length;
+            }
+            
+            if (storageSize) {
+                try {
+                    const dataStr = JSON.stringify(notifications);
+                    const sizeInBytes = new Blob([dataStr]).size;
+                    const sizeInKB = (sizeInBytes / 1024).toFixed(2);
+                    storageSize.textContent = sizeInKB + ' KB';
+                } catch (error) {
+                    storageSize.textContent = '0 KB';
+                }
+            }
+        }
+
+        // Supabase functions
+        async function updateEquipmentSapId(equipmentName, newSapId) {
+            try {
+                const equipment = equipmentData.find(eq => eq.equipment_name === equipmentName);
+                if (!equipment) {
+                    showToast('Equipment not found in database', 'error');
+                    return false;
+                }
+
+                const { data, error } = await supabaseClient
+                    .from('equipment_master')
+                    .update({ sap_id: newSapId })
+                    .eq('equipment_name', equipmentName);
+
+                if (error) {
+                    console.error('Error updating SAP ID:', error);
+                    showToast(`Database update failed: ${error.message}`, 'error');
+                    
+                    const localEquipment = equipmentData.find(eq => eq.equipment_name === equipmentName);
+                    if (localEquipment) {
+                        localEquipment.sap_id = newSapId;
+                        showToast('SAP ID updated locally (database update failed)', 'warning');
+                    }
+                    return false;
+                } else {
+                    const localEquipment = equipmentData.find(eq => eq.equipment_name === equipmentName);
+                    if (localEquipment) {
+                        localEquipment.sap_id = newSapId;
+                    }
+                    
+                    showToast(`SAP ID updated successfully for ${equipmentName}!`, 'success');
+                    return true;
+                }
+            } catch (error) {
+                console.error('Error updating SAP ID:', error);
+                showToast('Error updating SAP ID: ' + error.message, 'error');
+                
+                const localEquipment = equipmentData.find(eq => eq.equipment_name === equipmentName);
+                if (localEquipment) {
+                    localEquipment.sap_id = newSapId;
+                    showToast('SAP ID updated locally only', 'warning');
+                }
+                return false;
+            }
+        }
+
+        async function loadEquipmentData() {
+            try {
+                showToast('Loading equipment data from equipment_master table...', 'info');
+                
+                const { data, error } = await supabaseClient
+                    .from('equipment_master')
+                    .select('*');
+                
+                if (error) {
+                    console.error('Error loading equipment data:', error);
+                    showToast(`Error loading from equipment_master: ${error.message}`, 'error');
+                    
+                    equipmentData = [
+                        {
+                            department: 'Production',
+                            section: 'Line A',
+                            component: 'Motor',
+                            component_section: 'Drive Unit',
+                            equipment_name: 'Motor-001',
+                            sap_id: 'SAP001',
+                            category: 'Electrical'
+                        },
+                        {
+                            department: 'Production',
+                            section: 'Line A',
+                            component: 'Pump',
+                            component_section: 'Hydraulic',
+                            equipment_name: 'Pump-001',
+                            sap_id: 'N/A',
+                            category: 'Mechanical'
+                        },
+                        {
+                            department: 'Production',
+                            section: 'Line B',
+                            component: 'Conveyor',
+                            component_section: 'Belt System',
+                            equipment_name: 'Conveyor-001',
+                            sap_id: null,
+                            category: 'Mechanical'
+                        },
+                        {
+                            department: 'Maintenance',
+                            section: 'Workshop',
+                            component: 'Compressor',
+                            component_section: 'Air System',
+                            equipment_name: 'Compressor-001',
+                            sap_id: 'SAP003',
+                            category: 'Pneumatic'
+                        },
+                        {
+                            department: 'Quality',
+                            section: 'Lab',
+                            component: 'Analyzer',
+                            component_section: 'Testing Unit',
+                            equipment_name: 'Analyzer-001',
+                            sap_id: '',
+                            category: 'Instrumentation'
+                        }
+                    ];
+                    showToast('Using sample data. Please check your equipment_master table structure.', 'warning');
+                } else if (!data || data.length === 0) {
+                    showToast('equipment_master table is empty. Please add equipment data.', 'warning');
+                    equipmentData = [];
+                } else {
+                    equipmentData = data;
+                    showToast(`Successfully loaded ${data.length} equipment records from equipment_master!`, 'success');
+                    console.log('Equipment data loaded:', data);
+                }
+                
+                buildEquipmentHierarchy();
+                
+            } catch (error) {
+                console.error('Error connecting to database:', error);
+                showToast('Error connecting to database: ' + error.message, 'error');
+                
+                equipmentData = [
+                    {
+                        department: 'Production',
+                        section: 'Line A',
+                        component: 'Motor',
+                        component_section: 'Drive Unit',
+                        equipment_name: 'Motor-001',
+                        sap_id: 'SAP001',
+                        category: 'Electrical'
+                    }
+                ];
+                buildEquipmentHierarchy();
+            }
+        }
+
+        function buildEquipmentHierarchy() {
+            equipmentHierarchy = {};
+            
+            equipmentData.forEach(item => {
+                const dept = item.department;
+                const section = item.section;
+                const component = item.component;
+                const componentSection = item.component_section;
+                const equipmentName = item.equipment_name;
+                
+                if (!equipmentHierarchy[dept]) {
+                    equipmentHierarchy[dept] = {};
+                }
+                if (!equipmentHierarchy[dept][section]) {
+                    equipmentHierarchy[dept][section] = {};
+                }
+                if (!equipmentHierarchy[dept][section][component]) {
+                    equipmentHierarchy[dept][section][component] = {};
+                }
+                if (!equipmentHierarchy[dept][section][component][componentSection]) {
+                    equipmentHierarchy[dept][section][component][componentSection] = [];
+                }
+                
+                if (!equipmentHierarchy[dept][section][component][componentSection].includes(equipmentName)) {
+                    equipmentHierarchy[dept][section][component][componentSection].push(equipmentName);
+                }
+            });
+            
+            if (document.getElementById('department-select')) {
+                populateDepartments();
+            }
+        }
+
+        // Authentication Functions
+        function handleLogin(event) {
+            event.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
+            
+            const validCredentials = {
+                'admin': { password: 'admin123', role: 'admin' },
+                'user': { password: 'user123', role: 'user' }
+            };
+            
+            if (validCredentials[username] && validCredentials[username].password === password && validCredentials[username].role === role) {
+                currentUser = username;
+                userRole = role;
+                
+                localStorage.setItem('currentUser', username);
+                localStorage.setItem('userRole', role);
+                
+                initializeApp();
+                showToast(`Welcome ${username}! Logged in as ${role}`, 'success');
+            } else {
+                showToast('Invalid credentials. Please check username, password, and role.', 'error');
+            }
+        }
+
+        function logout() {
+            const confirmMessage = document.createElement('div');
+            confirmMessage.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            confirmMessage.innerHTML = `
+                <div class="bg-white rounded-xl p-6 max-w-sm mx-4">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Confirm Logout</h3>
+                    <p class="text-gray-600 mb-4">Are you sure you want to logout?</p>
+                    <div class="flex gap-3">
+                        <button onclick="performLogout()" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                            Yes, Logout
+                        </button>
+                        <button onclick="this.closest('.fixed').remove()" class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmMessage);
+        }
+
+        function performLogout() {
+            currentUser = null;
+            userRole = null;
+            localStorage.removeItem('currentUser');
+            localStorage.removeItem('userRole');
+            
+            document.getElementById('main-content').classList.add('hidden');
+            document.getElementById('main-sidebar').classList.add('hidden');
+            document.getElementById('login-page').classList.add('active');
+            
+            const confirmDialog = document.querySelector('.fixed.inset-0');
+            if (confirmDialog) {
+                confirmDialog.remove();
+            }
+            
+            showToast('Logged out successfully', 'info');
+        }
+
+        async function initializeApp() {
+            document.getElementById('login-page').classList.remove('active');
+            document.getElementById('main-content').classList.remove('hidden');
+            document.getElementById('main-sidebar').classList.remove('hidden');
+            document.getElementById('save-indicator-container').classList.remove('hidden');
+            
+            configureUIForRole();
+            await initializeForm();
+            loadAutoExportPreference();
+            updateDashboardMetrics();
+            updateCharts();
+            updateStorageInfo();
+        }
+
+        function configureUIForRole() {
+            document.getElementById('user-display-name').textContent = currentUser;
+            document.getElementById('user-display-role').textContent = userRole === 'admin' ? 'Administrator' : 'User';
+            
+            if (userRole === 'user') {
+                document.getElementById('user-id-input').value = currentUser;
+                document.getElementById('user-id-input').readOnly = true;
+                
+                const adminOptions = document.querySelectorAll('.admin-only');
+                adminOptions.forEach(option => {
+                    option.style.display = 'none';
+                });
+            } else {
+                const adminOptions = document.querySelectorAll('.admin-only');
+                adminOptions.forEach(option => {
+                    option.style.display = 'block';
+                });
+            }
+        }
+
+        // Page Navigation
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            document.getElementById(pageId + '-page').classList.add('active');
+            const navItem = document.getElementById('nav-' + pageId);
+            if (navItem) {
+                navItem.classList.add('active');
+            }
+            
+            if (pageId === 'notifications') {
+                loadNotificationsPage();
+            } else if (pageId === 'dashboard') {
+                populateFilterDepartments();
+                updateActiveFiltersDisplay();
+                updateCharts();
+            } else if (pageId === 'data') {
+                updateStorageInfo();
+            }
+        }
+
+        // Initialize the form
+        async function initializeForm() {
+            document.getElementById('date-input').value = new Date().toISOString().split('T')[0];
+            
+            await loadEquipmentData();
+            
+            populateDepartments();
+            setupHierarchyHandlers();
+        }
+
+        function populateDepartments() {
+            const departmentSelect = document.getElementById('department-select');
+            if (!departmentSelect) return;
+            
+            departmentSelect.innerHTML = '<option value="">Select Department</option>';
+            
+            Object.keys(equipmentHierarchy).forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept;
+                option.textContent = dept;
+                departmentSelect.appendChild(option);
+            });
+            
+            console.log('Departments populated:', Object.keys(equipmentHierarchy));
+        }
+
+        function setupHierarchyHandlers() {
+            const departmentSelect = document.getElementById('department-select');
+            
+            departmentSelect.addEventListener('change', function() {
+                console.log('Department changed to:', this.value);
+                console.log('Equipment hierarchy:', equipmentHierarchy);
+                console.log('Available sections for department:', equipmentHierarchy[this.value]);
+                
+                const sectionSelect = document.getElementById('section-select');
+                const componentSelect = document.getElementById('component-select');
+                const componentSectionSelect = document.getElementById('component-section-select');
+                const equipmentSelect = document.getElementById('equipment-select');
+                
+                resetDropdown(sectionSelect, 'Select Section');
+                resetDropdown(componentSelect, 'Select Component');
+                resetDropdown(componentSectionSelect, 'Select Component Section');
+                resetDropdown(equipmentSelect, 'Select Equipment');
+                clearEquipmentDetails();
+                hideAllCustomInputs();
+                
+                if (this.value && equipmentHierarchy[this.value]) {
+                    console.log('Enabling section dropdown and populating options');
+                    sectionSelect.disabled = false;
+                    Object.keys(equipmentHierarchy[this.value]).forEach(section => {
+                        const option = document.createElement('option');
+                        option.value = section;
+                        option.textContent = section;
+                        sectionSelect.appendChild(option);
+                        console.log('Added section option:', section);
+                    });
+                    const othersOption = document.createElement('option');
+                    othersOption.value = 'Others';
+                    othersOption.textContent = 'Others (Custom)';
+                    sectionSelect.appendChild(othersOption);
+                    console.log('Section dropdown populated with', sectionSelect.options.length - 1, 'options');
+                } else {
+                    console.log('No sections found for department or department not selected');
+                    sectionSelect.disabled = true;
+                }
+            });
+
+            document.getElementById('section-select').addEventListener('change', function() {
+                const department = document.getElementById('department-select').value;
+                const componentSelect = document.getElementById('component-select');
+                const componentSectionSelect = document.getElementById('component-section-select');
+                const equipmentSelect = document.getElementById('equipment-select');
+                const sectionCustomInput = document.getElementById('section-custom-input');
+                
+                resetDropdown(componentSelect, 'Select Component');
+                resetDropdown(componentSectionSelect, 'Select Component Section');
+                resetDropdown(equipmentSelect, 'Select Equipment');
+                clearEquipmentDetails();
+                hideCustomInputsExcept('section');
+                
+                if (this.value === 'Others') {
+                    sectionCustomInput.classList.remove('hidden');
+                    sectionCustomInput.focus();
+                    componentSelect.disabled = false;
+                    const othersOption = document.createElement('option');
+                    othersOption.value = 'Others';
+                    othersOption.textContent = 'Others (Custom)';
+                    componentSelect.appendChild(othersOption);
+                } else {
+                    sectionCustomInput.classList.add('hidden');
+                    sectionCustomInput.value = '';
+                    
+                    if (this.value && department && equipmentHierarchy[department][this.value]) {
+                        componentSelect.disabled = false;
+                        Object.keys(equipmentHierarchy[department][this.value]).forEach(component => {
+                            const option = document.createElement('option');
+                            option.value = component;
+                            option.textContent = component;
+                            componentSelect.appendChild(option);
+                        });
+                        const othersOption = document.createElement('option');
+                        othersOption.value = 'Others';
+                        othersOption.textContent = 'Others (Custom)';
+                        componentSelect.appendChild(othersOption);
+                    } else {
+                        componentSelect.disabled = true;
+                    }
+                }
+            });
+
+            document.getElementById('component-select').addEventListener('change', function() {
+                const department = document.getElementById('department-select').value;
+                const section = document.getElementById('section-select').value;
+                const componentSectionSelect = document.getElementById('component-section-select');
+                const equipmentSelect = document.getElementById('equipment-select');
+                const componentCustomInput = document.getElementById('component-custom-input');
+                
+                resetDropdown(componentSectionSelect, 'Select Component Section');
+                resetDropdown(equipmentSelect, 'Select Equipment');
+                clearEquipmentDetails();
+                hideCustomInputsExcept('component');
+                
+                if (this.value === 'Others') {
+                    componentCustomInput.classList.remove('hidden');
+                    componentCustomInput.focus();
+                    componentSectionSelect.disabled = false;
+                    const othersOption = document.createElement('option');
+                    othersOption.value = 'Others';
+                    othersOption.textContent = 'Others (Custom)';
+                    componentSectionSelect.appendChild(othersOption);
+                } else {
+                    componentCustomInput.classList.add('hidden');
+                    componentCustomInput.value = '';
+                    
+                    if (this.value && department && section && section !== 'Others' && equipmentHierarchy[department][section][this.value]) {
+                        componentSectionSelect.disabled = false;
+                        Object.keys(equipmentHierarchy[department][section][this.value]).forEach(compSection => {
+                            const option = document.createElement('option');
+                            option.value = compSection;
+                            option.textContent = compSection;
+                            componentSectionSelect.appendChild(option);
+                        });
+                        const othersOption = document.createElement('option');
+                        othersOption.value = 'Others';
+                        othersOption.textContent = 'Others (Custom)';
+                        componentSectionSelect.appendChild(othersOption);
+                    } else {
+                        componentSectionSelect.disabled = false;
+                        const othersOption = document.createElement('option');
+                        othersOption.value = 'Others';
+                        othersOption.textContent = 'Others (Custom)';
+                        componentSectionSelect.appendChild(othersOption);
+                    }
+                }
+            });
+
+            document.getElementById('component-section-select').addEventListener('change', function() {
+                const department = document.getElementById('department-select').value;
+                const section = document.getElementById('section-select').value;
+                const component = document.getElementById('component-select').value;
+                const equipmentSelect = document.getElementById('equipment-select');
+                const componentSectionCustomInput = document.getElementById('component-section-custom-input');
+                
+                resetDropdown(equipmentSelect, 'Select Equipment');
+                clearEquipmentDetails();
+                hideCustomInputsExcept('component-section');
+                
+                if (this.value === 'Others') {
+                    componentSectionCustomInput.classList.remove('hidden');
+                    componentSectionCustomInput.focus();
+                    equipmentSelect.disabled = false;
+                    const othersOption = document.createElement('option');
+                    othersOption.value = 'Others';
+                    othersOption.textContent = 'Others (Custom)';
+                    equipmentSelect.appendChild(othersOption);
+                } else {
+                    componentSectionCustomInput.classList.add('hidden');
+                    componentSectionCustomInput.value = '';
+                    
+                    if (this.value && department && section && component && 
+                        section !== 'Others' && component !== 'Others' &&
+                        equipmentHierarchy[department][section][component][this.value]) {
+                        equipmentSelect.disabled = false;
+                        equipmentHierarchy[department][section][component][this.value].forEach(equipment => {
+                            const option = document.createElement('option');
+                            option.value = equipment;
+                            option.textContent = equipment;
+                            equipmentSelect.appendChild(option);
+                        });
+                        const othersOption = document.createElement('option');
+                        othersOption.value = 'Others';
+                        othersOption.textContent = 'Others (Custom)';
+                        equipmentSelect.appendChild(othersOption);
+                    } else {
+                        equipmentSelect.disabled = false;
+                        const othersOption = document.createElement('option');
+                        othersOption.value = 'Others';
+                        othersOption.textContent = 'Others (Custom)';
+                        equipmentSelect.appendChild(othersOption);
+                    }
+                }
+            });
+
+            document.getElementById('equipment-select').addEventListener('change', function() {
+                const equipmentCustomInput = document.getElementById('equipment-custom-input');
+                
+                hideCustomInputsExcept('equipment');
+                
+                if (this.value === 'Others') {
+                    equipmentCustomInput.classList.remove('hidden');
+                    equipmentCustomInput.focus();
+                    clearEquipmentDetails();
+                    const sapIdInput = document.getElementById('sap-id-input');
+                    sapIdInput.value = '';
+                    sapIdInput.readOnly = false;
+                    sapIdInput.classList.remove('bg-gray-50', 'text-gray-600');
+                    sapIdInput.classList.add('bg-white', 'text-gray-800');
+                    sapIdInput.placeholder = 'Enter SAP ID for custom equipment';
+                    
+                    const categorySelect = document.getElementById('category-select');
+                    categorySelect.value = '';
+                } else {
+                    equipmentCustomInput.classList.add('hidden');
+                    equipmentCustomInput.value = '';
+                    
+                    if (this.value) {
+                        fillEquipmentDetails(this.value);
+                    } else {
+                        clearEquipmentDetails();
+                    }
+                }
+            });
+
+            document.getElementById('job-type-select').addEventListener('change', function() {
+                const jobType = this.value;
+                if (jobType) {
+                    let autoPriority;
+                    switch(jobType) {
+                        case 'Breakdown':
+                            autoPriority = 'critical';
+                            break;
+                        case 'Need Base':
+                            autoPriority = 'high';
+                            break;
+                        case 'Shutdown':
+                            autoPriority = 'medium';
+                            break;
+                        default:
+                            autoPriority = 'medium';
+                    }
+                    setPriority(autoPriority);
+                    showToast(`Priority automatically set to ${autoPriority.toUpperCase()} based on job type`, 'info');
+                }
+            });
+            
+            setPriority('medium');
+        }
+
+        // Helper functions
+        function resetDropdown(selectElement, placeholder) {
+            selectElement.innerHTML = `<option value="">${placeholder}</option>`;
+            selectElement.disabled = true;
+        }
+
+        function hideAllCustomInputs() {
+            document.getElementById('section-custom-input').classList.add('hidden');
+            document.getElementById('component-custom-input').classList.add('hidden');
+            document.getElementById('component-section-custom-input').classList.add('hidden');
+            document.getElementById('equipment-custom-input').classList.add('hidden');
+            
+            document.getElementById('section-custom-input').value = '';
+            document.getElementById('component-custom-input').value = '';
+            document.getElementById('component-section-custom-input').value = '';
+            document.getElementById('equipment-custom-input').value = '';
+        }
+
+        function hideCustomInputsExcept(keepVisible) {
+            const inputs = ['section', 'component', 'component-section', 'equipment'];
+            inputs.forEach(input => {
+                const element = document.getElementById(input + '-custom-input');
+                if (input !== keepVisible) {
+                    element.classList.add('hidden');
+                    element.value = '';
+                }
+            });
+        }
+
+        function clearEquipmentDetails() {
+            const sapIdInput = document.getElementById('sap-id-input');
+            const manualSapContainer = document.getElementById('manual-sap-container');
+            const manualSapInput = document.getElementById('manual-sap-input');
+            
+            sapIdInput.value = '';
+            sapIdInput.readOnly = true;
+            sapIdInput.classList.add('bg-gray-50', 'text-gray-600');
+            sapIdInput.classList.remove('bg-white', 'text-gray-800', 'border-yellow-300', 'focus:ring-2', 'focus:ring-yellow-500', 'border-red-500', 'ring-2', 'ring-red-200');
+            sapIdInput.placeholder = 'Auto-filled when equipment selected';
+            
+            manualSapContainer.classList.add('hidden');
+            manualSapInput.value = '';
+            
+            document.getElementById('category-select').value = '';
+        }
+
+        function fillEquipmentDetails(equipmentName) {
+            const equipment = equipmentData.find(eq => eq.equipment_name === equipmentName);
+            console.log('Selected equipment:', equipmentName);
+            console.log('Found equipment data:', equipment);
+            
+            if (equipment) {
+                const sapId = equipment.sap_id;
+                const sapIdInput = document.getElementById('sap-id-input');
+                const manualSapContainer = document.getElementById('manual-sap-container');
+                const manualSapInput = document.getElementById('manual-sap-input');
+                
+                console.log('SAP ID from database:', sapId);
+                console.log('Manual SAP container element:', manualSapContainer);
+                
+                const categorySelect = document.getElementById('category-select');
+                if (equipment.category && ['A+', 'A', 'B', 'C'].includes(equipment.category)) {
+                    categorySelect.value = equipment.category;
+                } else {
+                    categorySelect.value = '';
+                }
+                
+                const isSapIdMissing = !sapId || sapId === 'N/A' || sapId === '' || sapId === null || sapId === undefined;
+                console.log('Is SAP ID missing?', isSapIdMissing);
+                
+                if (isSapIdMissing) {
+                    console.log('SAP ID is missing - showing manual input');
+                    
+                    sapIdInput.value = 'N/A - Missing from Database';
+                    sapIdInput.readOnly = true;
+                    sapIdInput.classList.add('bg-red-50', 'text-red-600', 'border-red-300');
+                    sapIdInput.classList.remove('bg-gray-50', 'text-gray-600');
+                    
+                    console.log('Removing hidden class from manual container');
+                    manualSapContainer.classList.remove('hidden');
+                    manualSapInput.value = '';
+                    
+                    manualSapContainer.style.display = 'block';
+                    
+                    setTimeout(() => {
+                        manualSapInput.focus();
+                    }, 100);
+                    
+                    showToast('⚠️ SAP ID missing! Please enter manually in the yellow box below', 'warning');
+                } else {
+                    console.log('SAP ID exists - hiding manual input');
+                    
+                    sapIdInput.value = sapId;
+                    sapIdInput.readOnly = true;
+                    sapIdInput.classList.add('bg-gray-50', 'text-gray-600');
+                    sapIdInput.classList.remove('bg-red-50', 'text-red-600', 'border-red-300');
+                    sapIdInput.placeholder = 'Auto-filled from database';
+                    
+                    manualSapContainer.classList.add('hidden');
+                    manualSapContainer.style.display = 'none';
+                    manualSapInput.value = '';
+                    
+                    showToast('✅ Equipment details loaded successfully!', 'success');
+                }
+            }
+        }
+
+        async function saveManualSapId() {
+            const manualSapInput = document.getElementById('manual-sap-input');
+            const selectedEquipment = document.getElementById('equipment-select').value;
+            const newSapId = manualSapInput.value.trim();
+            
+            if (!newSapId) {
+                showToast('❌ Please enter a SAP ID before saving', 'error');
+                manualSapInput.focus();
+                return;
+            }
+            
+            if (!selectedEquipment) {
+                showToast('❌ No equipment selected', 'error');
+                return;
+            }
+            
+            if (newSapId.length < 3) {
+                showToast('❌ SAP ID must be at least 3 characters long', 'error');
+                manualSapInput.focus();
+                return;
+            }
+            
+            showToast('💾 Saving SAP ID to database...', 'info');
+            
+            const success = await updateEquipmentSapId(selectedEquipment, newSapId);
+            
+            if (success) {
+                const sapIdInput = document.getElementById('sap-id-input');
+                sapIdInput.value = newSapId;
+                sapIdInput.classList.remove('bg-red-50', 'text-red-600', 'border-red-300');
+                sapIdInput.classList.add('bg-green-50', 'text-green-600', 'border-green-300');
+                
+                const manualSapContainer = document.getElementById('manual-sap-container');
+                manualSapContainer.classList.add('hidden');
+                
+                showToast('✅ SAP ID saved successfully! Database updated.', 'success');
+            } else {
+                const sapIdInput = document.getElementById('sap-id-input');
+                sapIdInput.value = newSapId + ' (Local Only)';
+                sapIdInput.classList.remove('bg-red-50', 'text-red-600', 'border-red-300');
+                sapIdInput.classList.add('bg-yellow-50', 'text-yellow-600', 'border-yellow-300');
+                
+                showToast('⚠️ SAP ID saved locally (database update failed)', 'warning');
+            }
+        }
+
+        async function createNotification() {
+            // 1. Collect and Validate Data
+            const formData = collectFormData();
+            
+            if (!validateForm(formData)) {
+                return; // validateForm already shows the error toast
+            }
+
+            // 2. Handle Equipment SAP ID Updates (Existing Logic)
+            const selectedEquipment = document.getElementById('equipment-select').value;
+            const enteredSapId = document.getElementById('sap-id-input').value;
+            
+            if (selectedEquipment && enteredSapId && enteredSapId !== 'N/A') {
+                await updateEquipmentSapId(selectedEquipment, enteredSapId);
+            }
+
+            // 3. Create the Local Object (Existing Logic)
+            const localId = Date.now();
+            const notification = {
+                id: localId,
+                ...formData,
+                priority: currentPriority,
+                createdAt: new Date().toISOString(),
+                status: formData.notificationStatus,
+                userId: userRole === 'user' ? currentUser : formData.userId
+            };
+
+            // 4. Save to Local Storage (Keep this for offline safety)
+            notifications.push(notification);
+            saveNotificationsToLocal();
+
+            // ---------------------------------------------------------
+            // 5. NEW: Push to Supabase Cloud
+            // ---------------------------------------------------------
+            updateSaveIndicator('saving'); // reuse your existing saving indicator
+            
+            try {
+                const { data, error } = await supabaseClient
+                    .from('job_requests') // Make sure this table exists in Supabase
+                    .insert([
+                        {
+                            date: notification.date,
+                            user_id: notification.userId,
+                            department: notification.department,
+                            section: notification.section,
+                            component: notification.component,
+                            component_section: notification.componentSection,
+                            equipment_name: notification.equipmentName,
+                            sap_id: notification.sapId,
+                            category: notification.category,
+                            job_type: notification.jobType,
+                            technique: notification.technique,
+                            expected_finish_date: notification.expectedFinishDate,
+                            status: notification.status,
+                            priority: notification.priority,
+                            description: notification.description,
+                            local_id: localId.toString() // Link cloud record to local record
+                        }
+                    ]);
+
+                if (error) throw error;
+
+                showToast('✅ Saved locally and synced to Cloud!', 'success');
+                updateSaveIndicator('saved');
+
+            } catch (err) {
+                console.error('Supabase Upload Error:', err);
+                // We only show a warning, not an error, because the data IS safe in local storage
+                showToast('⚠️ Saved locally, but Cloud sync failed (Check Internet)', 'warning');
+                updateSaveIndicator('error');
+            }
+
+            // 6. Cleanup (Existing Logic)
+            clearForm();
+            populateFilterDepartments();
+            updateDashboardMetrics();
+        }
+
+        function collectFormData() {
+            const sectionValue = document.getElementById('section-select').value === 'Others' ? 
+                document.getElementById('section-custom-input').value : 
+                document.getElementById('section-select').value;
+                
+            const componentValue = document.getElementById('component-select').value === 'Others' ? 
+                document.getElementById('component-custom-input').value : 
+                document.getElementById('component-select').value;
+                
+            const componentSectionValue = document.getElementById('component-section-select').value === 'Others' ? 
+                document.getElementById('component-section-custom-input').value : 
+                document.getElementById('component-section-select').value;
+                
+            const equipmentValue = document.getElementById('equipment-select').value === 'Others' ? 
+                document.getElementById('equipment-custom-input').value : 
+                document.getElementById('equipment-select').value;
+            
+            return {
+                date: document.getElementById('date-input').value,
+                userId: document.getElementById('user-id-input').value,
+                department: document.getElementById('department-select').value,
+                section: sectionValue,
+                component: componentValue,
+                componentSection: componentSectionValue,
+                equipmentName: equipmentValue,
+                sapId: document.getElementById('sap-id-input').value,
+                category: document.getElementById('category-select').value,
+                jobType: document.getElementById('job-type-select').value,
+                technique: document.getElementById('technique-select').value,
+                expectedFinishDate: document.getElementById('expected-finish-date-input').value,
+                notificationStatus: document.getElementById('status-select').value,
+                description: document.getElementById('description-input').value
+            };
+        }
+
+        function validateForm(data) {
+            const isValid = data.date && data.userId && data.department && data.section && 
+                   data.component && data.componentSection && data.equipmentName &&
+                   data.jobType && data.technique && data.expectedFinishDate && data.description && data.category;
+            
+            if (document.getElementById('section-select').value === 'Others' && !document.getElementById('section-custom-input').value.trim()) {
+                showToast('❌ Please enter a custom section name', 'error');
+                document.getElementById('section-custom-input').focus();
+                return false;
+            }
+            
+            if (document.getElementById('component-select').value === 'Others' && !document.getElementById('component-custom-input').value.trim()) {
+                showToast('❌ Please enter a custom component name', 'error');
+                document.getElementById('component-custom-input').focus();
+                return false;
+            }
+            
+            if (document.getElementById('component-section-select').value === 'Others' && !document.getElementById('component-section-custom-input').value.trim()) {
+                showToast('❌ Please enter a custom component section name', 'error');
+                document.getElementById('component-section-custom-input').focus();
+                return false;
+            }
+            
+            if (document.getElementById('equipment-select').value === 'Others' && !document.getElementById('equipment-custom-input').value.trim()) {
+                showToast('❌ Please enter a custom equipment name', 'error');
+                document.getElementById('equipment-custom-input').focus();
+                return false;
+            }
+            
+            const manualSapContainer = document.getElementById('manual-sap-container');
+            const manualSapInput = document.getElementById('manual-sap-input');
+            const sapIdInput = document.getElementById('sap-id-input');
+            
+            if (!manualSapContainer.classList.contains('hidden')) {
+                const manualSapValue = manualSapInput.value.trim();
+                const mainSapValue = sapIdInput.value;
+                
+                const isSapIdProvided = (mainSapValue && !mainSapValue.includes('N/A - Missing')) || manualSapValue;
+                
+                if (!isSapIdProvided) {
+                    showToast('❌ Please enter and save the SAP ID before submitting the form', 'error');
+                    manualSapInput.focus();
+                    manualSapInput.classList.add('border-red-500', 'ring-2', 'ring-red-200');
+                    return false;
+                } else if (manualSapValue && mainSapValue.includes('N/A - Missing')) {
+                    showToast('❌ Please click "Save to Database" button before submitting', 'error');
+                    document.getElementById('save-sap-btn').focus();
+                    return false;
+                } else {
+                    manualSapInput.classList.remove('border-red-500', 'ring-2', 'ring-red-200');
+                }
+            }
+            
+            if (document.getElementById('equipment-select').value === 'Others') {
+                if (!sapIdInput.value.trim()) {
+                    showToast('❌ Please enter SAP ID for custom equipment', 'error');
+                    sapIdInput.focus();
+                    return false;
+                }
+                
+                if (!document.getElementById('category-select').value.trim()) {
+                    showToast('❌ Please select category for custom equipment', 'error');
+                    document.getElementById('category-select').focus();
+                    return false;
+                }
+            }
+            
+            if (!isValid) {
+                showToast('❌ Please fill in all required fields', 'error');
+            }
+            
+            return isValid;
+        }
+
+        function clearForm() {
+            document.getElementById('date-input').value = new Date().toISOString().split('T')[0];
+            if (userRole !== 'user') {
+                document.getElementById('user-id-input').value = '';
+                document.getElementById('user-id-input').readOnly = false;
+            }
+            document.getElementById('department-select').value = '';
+            resetDropdown(document.getElementById('section-select'), 'Select Section');
+            resetDropdown(document.getElementById('component-select'), 'Select Component');
+            resetDropdown(document.getElementById('component-section-select'), 'Select Component Section');
+            resetDropdown(document.getElementById('equipment-select'), 'Select Equipment');
+            clearEquipmentDetails();
+            hideAllCustomInputs();
+            document.getElementById('job-type-select').value = '';
+            document.getElementById('technique-select').value = '';
+            document.getElementById('expected-finish-date-input').value = '';
+            document.getElementById('status-select').value = 'Open';
+            document.getElementById('description-input').value = '';
+            document.getElementById('category-select').value = '';
+            
+            setPriority('medium');
+            showToast('Form cleared successfully!', 'info');
+        }
+
+        function setPriority(priority) {
+            currentPriority = priority;
+            
+            document.querySelectorAll('.priority-btn').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-offset-2', 'scale-105');
+            });
+            
+            const selectedBtn = document.getElementById(`priority-${priority}`);
+            if (selectedBtn) {
+                selectedBtn.classList.add('ring-2', 'ring-offset-2', 'scale-105');
+                
+                selectedBtn.classList.remove('ring-green-300', 'ring-yellow-300', 'ring-orange-300', 'ring-red-300');
+                switch(priority) {
+                    case 'low': selectedBtn.classList.add('ring-green-300'); break;
+                    case 'medium': selectedBtn.classList.add('ring-yellow-300'); break;
+                    case 'high': selectedBtn.classList.add('ring-orange-300'); break;
+                    case 'critical': selectedBtn.classList.add('ring-red-300'); break;
+                }
+            }
+        }
+
+        function loadNotificationsPage() {
+            const container = document.getElementById('notifications-list');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            let displayNotifications = notifications;
+            if (userRole === 'user') {
+                displayNotifications = notifications.filter(n => n.userId === currentUser);
+            }
+            
+            if (displayNotifications.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-gray-500 py-12">
+                        <div class="text-6xl mb-4">📋</div>
+                        <h3 class="text-xl font-semibold mb-2">No job requests found</h3>
+                        <p class="text-gray-400">Create your first job request to get started</p>
+                        <button onclick="showPage('create')" class="mt-4 bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                            Create Job Request
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            const sortedNotifications = displayNotifications.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            
+            sortedNotifications.forEach(notification => {
+                const priorityColors = {
+                    low: 'bg-green-100 text-green-800 border-green-200',
+                    medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                    high: 'bg-orange-100 text-orange-800 border-orange-200',
+                    critical: 'bg-red-100 text-red-800 border-red-200'
+                };
+                
+                const statusColors = {
+                    'Open': 'bg-blue-100 text-blue-800 border-blue-200',
+                    'In Progress': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                    'Completed': 'bg-green-100 text-green-800 border-green-200'
+                };
+                
+                const notificationCard = document.createElement('div');
+                notificationCard.className = 'bg-white rounded-xl shadow-lg p-6 border hover:shadow-xl transition-shadow';
+                notificationCard.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <h3 class="text-lg font-semibold text-gray-800">${notification.department} - ${notification.section}</h3>
+                                <span class="text-xs text-gray-500">#${notification.id}</span>
+                            </div>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600 mb-3">
+                                <div><strong>User ID:</strong> ${notification.userId}</div>
+                                <div><strong>Asset SAP ID:</strong> ${notification.sapId || 'N/A'}</div>
+                                <div><strong>Equipment:</strong> ${notification.equipmentName || 'N/A'}</div>
+                                <div><strong>Category:</strong> ${notification.category || 'N/A'}</div>
+                                <div><strong>Job Type:</strong> ${notification.jobType}</div>
+                                <div><strong>Technique:</strong> ${notification.technique}</div>
+                                <div><strong>Start Date:</strong> ${notification.date}</div>
+                                <div><strong>Expected Finish:</strong> ${notification.expectedFinishDate || 'N/A'}</div>
+                            </div>
+                            <p class="text-gray-700 mb-3">${notification.description}</p>
+                            <div class="flex gap-2 mb-3">
+                                ${notification.priority ? `<span class="px-3 py-1 text-sm rounded-full border ${priorityColors[notification.priority] || 'bg-gray-100 text-gray-800 border-gray-200'}">${notification.priority.toUpperCase()}</span>` : ''}
+                                <span class="px-3 py-1 text-sm rounded-full border ${statusColors[notification.status] || 'bg-gray-100 text-gray-800 border-gray-200'}" id="status-badge-${notification.id}">${notification.status}</span>
+                            </div>
+                            
+                            ${userRole === 'admin' ? `
+                            <div class="pt-4 border-t">
+                                <h4 class="text-sm font-semibold text-gray-800 mb-3">📅 Job Timeline & Status Update</h4>
+                                
+                                <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+                                    <div class="text-xs font-medium text-gray-600 mb-2">Current Timeline:</div>
+                                    <div class="space-y-1 text-xs">
+                                        <div class="flex justify-between">
+                                            <span>Created:</span>
+                                            <span class="font-medium">${new Date(notification.createdAt).toLocaleString()}</span>
+                                        </div>
+                                        ${notification.plannedDate ? `
+                                        <div class="flex justify-between">
+                                            <span>Planned:</span>
+                                            <span class="font-medium">${new Date(notification.plannedDate).toLocaleString()}</span>
+                                        </div>
+                                        ` : ''}
+                                        ${notification.startedDate ? `
+                                        <div class="flex justify-between">
+                                            <span>Started:</span>
+                                            <span class="font-medium">${new Date(notification.startedDate).toLocaleString()}</span>
+                                        </div>
+                                        ` : ''}
+                                        ${notification.completedDate ? `
+                                        <div class="flex justify-between">
+                                            <span>Completed:</span>
+                                            <span class="font-medium">${new Date(notification.completedDate).toLocaleString()}</span>
+                                        </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Update Status:</label>
+                                        <select id="status-update-${notification.id}" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                            <option value="Open" ${notification.status === 'Open' ? 'selected' : ''}>Open</option>
+                                            <option value="Planned" ${notification.status === 'Planned' ? 'selected' : ''}>Planned</option>
+                                            <option value="Completed" ${notification.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Date & Time:</label>
+                                        <input type="datetime-local" id="status-date-${notification.id}" 
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                                    </div>
+                                    
+                                    <div class="md:col-span-1">
+                                        <label class="block text-xs font-medium text-gray-700 mb-1">Action:</label>
+                                        <button onclick="updateJobStatus(${notification.id})" 
+                                                class="w-full px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700 transition-colors">
+                                            Update Status
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="block text-xs font-medium text-gray-700 mb-1">Description *:</label>
+                                    <textarea id="status-comment-${notification.id}" rows="2" placeholder="Add description about this status update..."
+                                              class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></textarea>
+                                </div>
+                                
+                                ${notification.statusHistory && notification.statusHistory.length > 0 ? `
+                                <div class="mt-4">
+                                    <h5 class="text-xs font-semibold text-gray-700 mb-2">📋 Status History:</h5>
+                                    <div class="space-y-2 max-h-32 overflow-y-auto">
+                                        ${notification.statusHistory.map(history => `
+                                            <div class="text-xs p-2 bg-blue-50 rounded border-l-2 border-blue-300">
+                                                <div class="flex justify-between items-start mb-1">
+                                                    <span class="font-medium text-blue-800">${history.status}</span>
+                                                    <span class="text-blue-600">${new Date(history.timestamp).toLocaleString()}</span>
+                                                </div>
+                                                ${history.comment ? `<div class="text-blue-700 italic">"${history.comment}"</div>` : ''}
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                                ` : ''}
+                            </div>
+                            ` : `
+                            <div class="pt-3 border-t">
+                                <div class="text-sm text-gray-500 italic">
+                                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                                    </svg>
+                                    Only administrators can update job request status
+                                </div>
+                            </div>
+                            `}
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-400 border-t pt-3">
+                        <div>Created: ${new Date(notification.createdAt).toLocaleString()}</div>
+                        ${notification.lastUpdated ? `<div>Last Updated: ${new Date(notification.lastUpdated).toLocaleString()}</div>` : ''}
+                    </div>
+                `;
+                container.appendChild(notificationCard);
+            });
+        }
+
+        function updateJobStatus(notificationId) {
+            const newStatus = document.getElementById(`status-update-${notificationId}`).value;
+            const statusDate = document.getElementById(`status-date-${notificationId}`).value;
+            const comment = document.getElementById(`status-comment-${notificationId}`).value.trim();
+            const notification = notifications.find(n => n.id === notificationId);
+            
+            if (!notification) {
+                showToast('Job request not found', 'error');
+                return;
+            }
+            
+            if (!comment) {
+                showToast('Description is required for status updates', 'error');
+                document.getElementById(`status-comment-${notificationId}`).focus();
+                return;
+            }
+            
+            if (notification.status === newStatus && !comment) {
+                showToast('No changes detected. Please select a different status or add a description.', 'warning');
+                return;
+            }
+            
+            if (notification.status !== newStatus && !statusDate) {
+                showToast('Please select a date and time for the status update', 'error');
+                return;
+            }
+            
+            const updateTimestamp = statusDate ? new Date(statusDate).toISOString() : new Date().toISOString();
+            const oldStatus = notification.status;
+            
+            if (!notification.statusHistory) {
+                notification.statusHistory = [];
+            }
+            
+            if (newStatus !== oldStatus) {
+                switch (newStatus) {
+                    case 'Planned':
+                        notification.plannedDate = updateTimestamp;
+                        break;
+                    case 'In Progress':
+                        notification.startedDate = updateTimestamp;
+                        break;
+                    case 'Completed':
+                        notification.completedDate = updateTimestamp;
+                        break;
+                }
+                
+                notification.status = newStatus;
+                notification.lastUpdated = updateTimestamp;
+            }
+            
+            const historyEntry = {
+                status: newStatus,
+                timestamp: updateTimestamp,
+                comment: comment || null,
+                updatedBy: currentUser,
+                previousStatus: oldStatus
+            };
+            
+            notification.statusHistory.push(historyEntry);
+            
+            saveNotificationsToLocal();
+            
+            const statusBadge = document.getElementById(`status-badge-${notificationId}`);
+            if (statusBadge) {
+                const statusColors = {
+                    'Open': 'bg-blue-100 text-blue-800 border-blue-200',
+                    'Planned': 'bg-purple-100 text-purple-800 border-purple-200',
+                    'In Progress': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+                    'Completed': 'bg-green-100 text-green-800 border-green-200'
+                };
+                statusBadge.className = `px-3 py-1 text-sm rounded-full border ${statusColors[newStatus]}`;
+                statusBadge.textContent = newStatus;
+            }
+            
+            document.getElementById(`status-date-${notificationId}`).value = '';
+            document.getElementById(`status-comment-${notificationId}`).value = '';
+            
+            const message = newStatus !== oldStatus ? 
+                `Job request #${notificationId} status updated from ${oldStatus} to ${newStatus}` :
+                `Comment added to job request #${notificationId}`;
+            
+            showToast(message, 'success');
+            
+            loadNotificationsPage();
+            updateDashboardMetrics();
+            updateCharts();
+        }
+
+        // Dashboard filter variables
+        let dashboardFilters = {
+            status: '',
+            priority: '',
+            department: '',
+            jobType: '',
+            dateRange: ''
+        };
+
+        function updateDashboardMetrics() {
+            let activeNotifications = notifications;
+            
+            if (userRole === 'user') {
+                activeNotifications = notifications.filter(n => n.userId === currentUser);
+            }
+            
+            activeNotifications = applyDashboardFilters(activeNotifications);
+            
+            const totalNotifications = activeNotifications.length;
+            const completedNotifications = activeNotifications.filter(n => n.status === 'Completed').length;
+            const openNotifications = activeNotifications.filter(n => n.status === 'Open').length;
+            const plannedNotifications = activeNotifications.filter(n => n.status === 'Planned').length;
+            const criticalAlerts = activeNotifications.filter(n => n.priority === 'critical').length;
+            const completionRate = totalNotifications > 0 ? Math.round((completedNotifications / totalNotifications) * 100) : 0;
+            
+            const today = new Date();
+            const overdueNotifications = activeNotifications.filter(n => 
+                n.status !== 'Completed' && n.expectedFinishDate && new Date(n.expectedFinishDate) < today
+            ).length;
+            
+            const oneWeekAgo = new Date();
+            oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+            const thisWeekNotifications = activeNotifications.filter(n => 
+                new Date(n.createdAt) >= oneWeekAgo
+            ).length;
+            
+            const completedWithTime = activeNotifications.filter(n => n.status === 'Completed' && n.lastUpdated);
+            let avgCompletionDays = 0;
+            if (completedWithTime.length > 0) {
+                const totalDays = completedWithTime.reduce((sum, n) => {
+                    const created = new Date(n.createdAt);
+                    const completed = new Date(n.lastUpdated);
+                    const days = Math.ceil((completed - created) / (1000 * 60 * 60 * 24));
+                    return sum + days;
+                }, 0);
+                avgCompletionDays = Math.round(totalDays / completedWithTime.length);
+            }
+            
+            const avgResponseHours = activeNotifications.length > 0 ? 
+                Math.round(activeNotifications.reduce((sum, n) => {
+                    const priorityHours = { critical: 2, high: 8, medium: 24, low: 48 };
+                    return sum + (priorityHours[n.priority] || 24);
+                }, 0) / activeNotifications.length) : 0;
+            
+            document.getElementById('total-notifications').textContent = totalNotifications;
+            document.getElementById('completion-rate').textContent = completionRate + '%';
+            document.getElementById('avg-response-time').textContent = avgResponseHours + 'h';
+            document.getElementById('critical-alerts').textContent = criticalAlerts;
+            
+            document.getElementById('open-notifications').textContent = openNotifications;
+            document.getElementById('planned-notifications').textContent = plannedNotifications;
+            document.getElementById('overdue-notifications').textContent = overdueNotifications;
+            document.getElementById('this-week-notifications').textContent = thisWeekNotifications;
+            document.getElementById('avg-completion-days').textContent = avgCompletionDays;
+            
+            const badge = document.getElementById('notification-badge');
+            if (badge) {
+                badge.textContent = totalNotifications;
+            }
+            
+            updateDepartmentStats(activeNotifications);
+            updateTechniqueStats(activeNotifications);
+            updateRecentActivity(activeNotifications);
+        }
+
+        function updateDepartmentStats(notifications) {
+            const departmentStats = {};
+            notifications.forEach(n => {
+                if (!departmentStats[n.department]) {
+                    departmentStats[n.department] = { total: 0, completed: 0 };
+                }
+                departmentStats[n.department].total++;
+                if (n.status === 'Completed') {
+                    departmentStats[n.department].completed++;
+                }
+            });
+            
+            const container = document.getElementById('department-stats');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            Object.entries(departmentStats)
+                .sort(([,a], [,b]) => b.total - a.total)
+                .slice(0, 5)
+                .forEach(([dept, stats]) => {
+                    const completionRate = stats.total > 0 ? Math.round((stats.completed / stats.total) * 100) : 0;
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+                    div.innerHTML = `
+                        <div>
+                            <div class="font-medium text-gray-800">${dept}</div>
+                            <div class="text-sm text-gray-600">${stats.total} notifications</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-semibold text-indigo-600">${completionRate}%</div>
+                            <div class="text-xs text-gray-500">completion</div>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+        }
+
+        function updateTechniqueStats(notifications) {
+            const techniqueStats = {};
+            notifications.forEach(n => {
+                if (n.technique) {
+                    techniqueStats[n.technique] = (techniqueStats[n.technique] || 0) + 1;
+                }
+            });
+            
+            const container = document.getElementById('technique-stats');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            Object.entries(techniqueStats)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 5)
+                .forEach(([technique, count]) => {
+                    const percentage = notifications.length > 0 ? Math.round((count / notifications.length) * 100) : 0;
+                    const div = document.createElement('div');
+                    div.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+                    div.innerHTML = `
+                        <div>
+                            <div class="font-medium text-gray-800">${technique}</div>
+                            <div class="text-sm text-gray-600">${count} uses</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="font-semibold text-green-600">${percentage}%</div>
+                            <div class="text-xs text-gray-500">of total</div>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+        }
+
+        function updateRecentActivity(notifications) {
+            const container = document.getElementById('recent-activity');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            const recentNotifications = notifications
+                .sort((a, b) => new Date(b.lastUpdated || b.createdAt) - new Date(a.lastUpdated || a.createdAt))
+                .slice(0, 5);
+            
+            if (recentNotifications.length === 0) {
+                container.innerHTML = '<div class="text-gray-500 text-center py-4">No recent activity</div>';
+                return;
+            }
+            
+            recentNotifications.forEach(n => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg';
+                const lastActivity = n.lastUpdated ? 'Updated' : 'Created';
+                const activityTime = new Date(n.lastUpdated || n.createdAt).toLocaleString();
+                
+                div.innerHTML = `
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-800">${n.department} - ${n.equipmentName || 'Equipment'}</div>
+                        <div class="text-sm text-gray-600">${lastActivity}: ${activityTime}</div>
+                    </div>
+                    <div class="text-right">
+                        <span class="px-2 py-1 text-xs rounded-full ${getStatusColor(n.status)}">${n.status}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'Open': 'bg-blue-100 text-blue-800',
+                'Planned': 'bg-purple-100 text-purple-800',
+                'In Progress': 'bg-yellow-100 text-yellow-800',
+                'Completed': 'bg-green-100 text-green-800'
+            };
+            return colors[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        // Chart variables
+        let priorityChart = null;
+        let statusChart = null;
+
+        function updateCharts() {
+            let activeNotifications = notifications;
+            
+            if (userRole === 'user') {
+                activeNotifications = notifications.filter(n => n.userId === currentUser);
+            }
+            
+            activeNotifications = applyDashboardFilters(activeNotifications);
+            
+            updatePriorityChart(activeNotifications);
+            updateStatusChart(activeNotifications);
+        }
+
+        function applyDashboardFilters(notifications) {
+            let filtered = [...notifications];
+            
+            if (dashboardFilters.status) {
+                filtered = filtered.filter(n => n.status === dashboardFilters.status);
+            }
+            
+            if (dashboardFilters.priority) {
+                filtered = filtered.filter(n => n.priority === dashboardFilters.priority);
+            }
+            
+            if (dashboardFilters.department) {
+                filtered = filtered.filter(n => n.department === dashboardFilters.department);
+            }
+            
+            if (dashboardFilters.jobType) {
+                filtered = filtered.filter(n => n.jobType === dashboardFilters.jobType);
+            }
+            
+            if (dashboardFilters.dateRange) {
+                const today = new Date();
+                const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                
+                switch (dashboardFilters.dateRange) {
+                    case 'today':
+                        filtered = filtered.filter(n => {
+                            const notificationDate = new Date(n.date);
+                            return notificationDate >= todayStart;
+                        });
+                        break;
+                    case 'week':
+                        const weekAgo = new Date(today);
+                        weekAgo.setDate(weekAgo.getDate() - 7);
+                        filtered = filtered.filter(n => new Date(n.createdAt) >= weekAgo);
+                        break;
+                    case 'month':
+                        const monthAgo = new Date(today);
+                        monthAgo.setMonth(monthAgo.getMonth() - 1);
+                        filtered = filtered.filter(n => new Date(n.createdAt) >= monthAgo);
+                        break;
+                    case 'overdue':
+                        filtered = filtered.filter(n => 
+                            n.status !== 'Completed' && n.expectedFinishDate && new Date(n.expectedFinishDate) < today
+                        );
+                        break;
+                }
+            }
+            
+            return filtered;
+        }
+
+        function applyFilters() {
+            dashboardFilters.status = document.getElementById('filter-status').value;
+            dashboardFilters.priority = document.getElementById('filter-priority').value;
+            dashboardFilters.department = document.getElementById('filter-department').value;
+            dashboardFilters.jobType = document.getElementById('filter-job-type').value;
+            dashboardFilters.dateRange = document.getElementById('filter-date-range').value;
+            
+            updateActiveFiltersDisplay();
+            
+            updateDashboardMetrics();
+            updateCharts();
+            
+            showToast('Filters applied successfully!', 'success');
+        }
+
+        function clearFilters() {
+            document.getElementById('filter-status').value = '';
+            document.getElementById('filter-priority').value = '';
+            document.getElementById('filter-department').value = '';
+            document.getElementById('filter-job-type').value = '';
+            document.getElementById('filter-date-range').value = '';
+            
+            dashboardFilters = {
+                status: '',
+                priority: '',
+                department: '',
+                jobType: '',
+                dateRange: ''
+            };
+            
+            updateActiveFiltersDisplay();
+            
+            updateDashboardMetrics();
+            updateCharts();
+            
+            showToast('All filters cleared!', 'info');
+        }
+
+        function updateActiveFiltersDisplay() {
+            const container = document.getElementById('active-filters');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            const activeFilters = [];
+            
+            if (dashboardFilters.status) activeFilters.push({ label: 'Status', value: dashboardFilters.status });
+            if (dashboardFilters.priority) activeFilters.push({ label: 'Priority', value: dashboardFilters.priority.charAt(0).toUpperCase() + dashboardFilters.priority.slice(1) });
+            if (dashboardFilters.department) activeFilters.push({ label: 'Department', value: dashboardFilters.department });
+            if (dashboardFilters.jobType) activeFilters.push({ label: 'Job Type', value: dashboardFilters.jobType });
+            if (dashboardFilters.dateRange) {
+                const dateLabels = {
+                    'today': 'Today',
+                    'week': 'This Week',
+                    'month': 'This Month',
+                    'overdue': 'Overdue Only'
+                };
+                activeFilters.push({ label: 'Date Range', value: dateLabels[dashboardFilters.dateRange] || dashboardFilters.dateRange });
+            }
+            
+            if (activeFilters.length === 0) {
+                container.innerHTML = '<span class="text-sm text-gray-500">No active filters</span>';
+                return;
+            }
+            
+            activeFilters.forEach(filter => {
+                const badge = document.createElement('span');
+                badge.className = 'inline-flex items-center px-3 py-1 rounded-full text-sm bg-indigo-100 text-indigo-800';
+                badge.innerHTML = `
+                    <span class="mr-1 font-medium">${filter.label}:</span>
+                    <span>${filter.value}</span>
+                `;
+                container.appendChild(badge);
+            });
+        }
+
+        function populateFilterDepartments() {
+            const departmentFilter = document.getElementById('filter-department');
+            if (!departmentFilter) return;
+            
+            const departments = [...new Set(notifications.map(n => n.department))].filter(Boolean);
+            
+            departmentFilter.innerHTML = '<option value="">All Departments</option>';
+            
+            departments.forEach(dept => {
+                const option = document.createElement('option');
+                option.value = dept;
+                option.textContent = dept;
+                departmentFilter.appendChild(option);
+            });
+        }
+
+        function updatePriorityChart(notifications) {
+            const priorityData = {
+                low: notifications.filter(n => n.priority === 'low').length,
+                medium: notifications.filter(n => n.priority === 'medium').length,
+                high: notifications.filter(n => n.priority === 'high').length,
+                critical: notifications.filter(n => n.priority === 'critical').length
+            };
+            
+            const ctx = document.getElementById('priorityChart');
+            if (!ctx) return;
+            
+            if (priorityChart) {
+                priorityChart.destroy();
+            }
+            
+            priorityChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Low', 'Medium', 'High', 'Critical'],
+                    datasets: [{
+                        data: [priorityData.low, priorityData.medium, priorityData.high, priorityData.critical],
+                        backgroundColor: ['#10B981', '#F59E0B', '#F97316', '#EF4444'],
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateStatusChart(notifications) {
+            const statusData = {
+                open: notifications.filter(n => n.status === 'Open').length,
+                planned: notifications.filter(n => n.status === 'Planned').length,
+                completed: notifications.filter(n => n.status === 'Completed').length
+            };
+            
+            const ctx = document.getElementById('statusChart');
+            if (!ctx) return;
+            
+            if (statusChart) {
+                statusChart.destroy();
+            }
+            
+            statusChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Open', 'Planned', 'Completed'],
+                    datasets: [{
+                        label: 'Job Requests',
+                        data: [statusData.open, statusData.planned, statusData.completed],
+                        backgroundColor: ['#3B82F6', '#8B5CF6', '#10B981'],
+                        borderRadius: 8,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Toast notification function
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('notification-container');
+            if (!container) return;
+            
+            const toast = document.createElement('div');
+            toast.className = `notification-enter fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm`;
+            
+            const colors = {
+                success: 'bg-green-500 text-white',
+                error: 'bg-red-500 text-white',
+                info: 'bg-blue-500 text-white',
+                warning: 'bg-yellow-500 text-white'
+            };
+            
+            toast.className += ` ${colors[type] || colors.info}`;
+            toast.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <span>${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.classList.add('notification-exit');
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, 5000);
+        }
+
+        // Initialize app on page load
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 Application starting...');
+            
+            const savedUser = localStorage.getItem('currentUser');
+            const savedRole = localStorage.getItem('userRole');
+            
+            console.log('📂 Loading data from storage...');
+            loadNotificationsFromLocal();
+            console.log('✅ Data loaded:', notifications.length, 'notifications');
+            
+            if (savedUser && savedRole) {
+                currentUser = savedUser;
+                userRole = savedRole;
+                await initializeApp();
+                console.log('👤 User logged in:', currentUser);
+            } else {
+                console.log('ℹ️ No saved login, showing login page');
+            }
+        });
+    </script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a0f72ddd3574055',t:'MTc2MzU1MjU5NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
