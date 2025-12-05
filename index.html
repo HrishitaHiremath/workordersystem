@@ -100,48 +100,41 @@
   
   <!-- Login Page -->
   <div id="login-page" class="page active">
-   <div class="min-h-screen flex items-center justify-center login-container">
-    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-     <div class="text-center mb-8">
-      <div class="text-6xl mb-4">
-       🔧
-      </div>
-      <h1 class="text-3xl font-bold text-gray-800 mb-2">Work Order System</h1>
-      <p class="text-gray-600">Please sign in to continue</p>
-     </div>
-     <form id="login-form" onsubmit="handleLogin(event)">
-  <div class="space-y-6">
-   <div>
-    <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label> 
-    <input type="email" id="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter your email">
+ <div class="min-h-screen flex items-center justify-center login-container">
+  <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+   <div class="text-center mb-8">
+    <div class="text-6xl mb-4">🔧</div>
+    <h1 id="auth-title" class="text-3xl font-bold text-gray-800 mb-2">Work Order System</h1>
+    <p id="auth-subtitle" class="text-gray-600">Please sign in to continue</p>
    </div>
-   <div>
-    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label> 
-    <input type="password" id="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter your password">
-   </div>
-   <button type="submit" id="login-btn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition-all transform hover:scale-105"> 
-    Sign In 
-   </button>
-  </div>
-  
-  <div class="mt-4 text-center">
-    <p class="text-sm text-gray-600">Don't have an account? <a href="#" onclick="handleSignUp()" class="text-indigo-600 hover:text-indigo-800 font-medium">Sign Up</a></p>
-  </div>
-</form>
-     <div class="mt-6 p-4 bg-blue-50 rounded-lg">
-      <h3 class="font-semibold text-blue-800 mb-2">Demo Credentials:</h3>
-      <div class="text-sm text-blue-700 space-y-1">
-       <div>
-        <strong>Admin:</strong> admin / admin123
-       </div>
-       <div>
-        <strong>User:</strong> user / user123
-       </div>
-      </div>
+   
+   <form id="login-form" onsubmit="handleAuth(event)">
+    <div class="space-y-6">
+     <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label> 
+      <input type="email" id="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter your email">
      </div>
+     <div>
+      <label class="block text-sm font-medium text-gray-700 mb-2">Password</label> 
+      <input type="password" id="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter your password">
+     </div>
+     
+     <button type="submit" id="auth-btn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition-all transform hover:scale-105"> 
+      Sign In 
+     </button>
     </div>
+   </form>
+
+   <div class="mt-6 text-center">
+    <p class="text-sm text-gray-600">
+        <span id="auth-switch-text">Don't have an account?</span> 
+        <a href="#" onclick="toggleAuthMode()" id="auth-switch-link" class="text-indigo-600 hover:text-indigo-800 font-medium">Sign Up</a>
+    </p>
    </div>
-  </div><!-- Navigation Sidebar -->
+  </div>
+ </div>
+</div>
+  <!-- Navigation Sidebar -->
   <div id="main-sidebar" class="fixed left-0 top-0 h-full w-64 sidebar text-white z-30 hidden">
    <div class="p-6">
     <div class="flex items-center justify-between mb-8">
@@ -1017,52 +1010,111 @@
         }
 
         // Authentication Functions
-        async function handleLogin(event) {
+        // Global variable to track mode
+let isSignUpMode = false;
+
+// 1. Toggle Function: Switches the UI between Login and Sign Up
+function toggleAuthMode() {
+    isSignUpMode = !isSignUpMode;
+    
+    const title = document.getElementById('auth-title');
+    const subtitle = document.getElementById('auth-subtitle');
+    const btn = document.getElementById('auth-btn');
+    const switchText = document.getElementById('auth-switch-text');
+    const switchLink = document.getElementById('auth-switch-link');
+    
+    // Clear inputs
+    document.getElementById('email').value = '';
+    document.getElementById('password').value = '';
+    
+    if (isSignUpMode) {
+        // Switch to Sign Up UI
+        title.textContent = 'Create Account';
+        subtitle.textContent = 'Enter details to register';
+        btn.textContent = 'Sign Up';
+        switchText.textContent = 'Already have an account?';
+        switchLink.textContent = 'Sign In';
+        btn.classList.replace('bg-indigo-600', 'bg-green-600');
+        btn.classList.replace('hover:bg-indigo-700', 'hover:bg-green-700');
+    } else {
+        // Switch back to Login UI
+        title.textContent = 'Work Order System';
+        subtitle.textContent = 'Please sign in to continue';
+        btn.textContent = 'Sign In';
+        switchText.textContent = "Don't have an account?";
+        switchLink.textContent = 'Sign Up';
+        btn.classList.replace('bg-green-600', 'bg-indigo-600');
+        btn.classList.replace('hover:bg-green-700', 'hover:bg-indigo-700');
+    }
+}
+
+// 2. Main Auth Handler: Decides whether to Login or Register
+async function handleAuth(event) {
     event.preventDefault();
     
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
-    const loginBtn = document.getElementById('login-btn');
+    const btn = document.getElementById('auth-btn');
     
+    if (!email || !password) {
+        showToast('Please fill in all fields', 'warning');
+        return;
+    }
+
     try {
-        loginBtn.textContent = 'Signing in...';
-        loginBtn.disabled = true;
+        btn.disabled = true;
+        btn.textContent = isSignUpMode ? 'Creating Account...' : 'Signing In...';
 
-        // 1. Authenticate with Supabase
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
+        if (isSignUpMode) {
+            // --- SIGN UP LOGIC ---
+            const { data, error } = await supabaseClient.auth.signUp({
+                email: email,
+                password: password
+            });
+            
+            if (error) throw error;
+            
+            showToast('✅ Account created! Please sign in.', 'success');
+            
+            // Note: If you have email confirmation enabled in Supabase, 
+            // the user won't be able to login until they click the email link.
+            // If disabled, we can auto-login or just switch mode:
+            toggleAuthMode(); // Switch back to login screen
+            
+        } else {
+            // --- LOGIN LOGIC ---
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
 
-        if (error) throw error;
+            if (error) throw error;
 
-        // 2. Auth successful, now fetch the user's role from the 'profiles' table
-        // We assume you created a 'profiles' table as suggested in Part 1
-        const { data: profileData, error: profileError } = await supabaseClient
-            .from('profiles')
-            .select('role')
-            .eq('id', data.user.id)
-            .single();
+            // Fetch Role (Logic from previous steps)
+            const { data: profileData } = await supabaseClient
+                .from('profiles')
+                .select('role')
+                .eq('id', data.user.id)
+                .single();
 
-        // Default to 'user' if no profile found
-        const role = profileData ? profileData.role : 'user'; 
+            const role = profileData ? profileData.role : 'user';
 
-        // 3. Set Session Variables
-        currentUser = email; // or data.user.id if you prefer IDs
-        userRole = role;
-        
-        localStorage.setItem('currentUser', currentUser);
-        localStorage.setItem('userRole', userRole);
+            // Set Session
+            currentUser = email;
+            userRole = role;
+            localStorage.setItem('currentUser', currentUser);
+            localStorage.setItem('userRole', userRole);
 
-        showToast(`Welcome back! Logged in as ${role}`, 'success');
-        initializeApp();
+            showToast(`Welcome back! Logged in as ${role}`, 'success');
+            initializeApp();
+        }
 
     } catch (error) {
-        console.error('Login error:', error);
-        showToast('Login Failed: ' + error.message, 'error');
+        console.error('Auth Error:', error);
+        showToast(error.message, 'error');
     } finally {
-        loginBtn.textContent = 'Sign In';
-        loginBtn.disabled = false;
+        btn.disabled = false;
+        btn.textContent = isSignUpMode ? 'Sign Up' : 'Sign In';
     }
 }
 
