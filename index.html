@@ -1,4 +1,6 @@
 
+
+
 <!doctype html>
 <html lang="en">
  <head>
@@ -95,12 +97,8 @@
   <script src="/_sdk/element_sdk.js" type="text/javascript"></script>
  </head>
  <body class="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen"><!-- Save Indicator (Fixed top-right) -->
-  <div id="save-indicator-container" class="fixed top-4 right-4 z-50 bg-white px-4 py-2 rounded-lg shadow-lg border hidden">
-   <div id="save-indicator" class="text-sm font-medium">
-    ✅ All changes saved
-   </div>
-   <div id="last-save-time" class="text-xs text-gray-500 mt-1"></div>
-  </div><!-- Login Page -->
+  
+  <!-- Login Page -->
   <div id="login-page" class="page active">
    <div class="min-h-screen flex items-center justify-center login-container">
     <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
@@ -112,15 +110,24 @@
       <p class="text-gray-600">Please sign in to continue</p>
      </div>
      <form id="login-form" onsubmit="handleLogin(event)">
-      <div class="space-y-6">
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Username</label> <input type="text" id="username" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter your username">
-       </div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Password</label> <input type="password" id="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter your password">
-       </div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Role</label> <select id="role" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"> <option value="">Select Role</option> <option value="user">User</option> <option value="admin">Administrator</option> </select>
-       </div><button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition-all transform hover:scale-105"> Sign In </button>
-      </div>
-     </form>
+  <div class="space-y-6">
+   <div>
+    <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label> 
+    <input type="email" id="email" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter your email">
+   </div>
+   <div>
+    <label class="block text-sm font-medium text-gray-700 mb-2">Password</label> 
+    <input type="password" id="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter your password">
+   </div>
+   <button type="submit" id="login-btn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition-all transform hover:scale-105"> 
+    Sign In 
+   </button>
+  </div>
+  
+  <div class="mt-4 text-center">
+    <p class="text-sm text-gray-600">Don't have an account? <a href="#" onclick="handleSignUp()" class="text-indigo-600 hover:text-indigo-800 font-medium">Sign Up</a></p>
+  </div>
+</form>
      <div class="mt-6 p-4 bg-blue-50 rounded-lg">
       <h3 class="font-semibold text-blue-800 mb-2">Demo Credentials:</h3>
       <div class="text-sm text-blue-700 space-y-1">
@@ -170,7 +177,21 @@
     </div>
    </div>
   </div><!-- Main Content Area -->
-  <div id="main-content" class="ml-64 min-h-screen hidden"><!-- Dashboard Page -->
+  <div id="main-content" class="ml-64 min-h-screen hidden">
+    <div id="save-indicator-container" class="w-full bg-white border-b border-gray-200 px-8 py-3 flex justify-between items-center hidden">
+        <div class="text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            System Status
+        </div>
+        
+        <div class="flex items-center gap-3">
+             <div id="save-indicator" class="text-sm font-medium transition-colors duration-300">
+                ✅ All changes saved
+             </div>
+             <div class="h-4 w-px bg-gray-300"></div> <div id="last-save-time" class="text-xs text-gray-500"></div>
+        </div>
+    </div>
+    
+    <!-- Dashboard Page -->
    <div id="dashboard-page" class="page active">
     <div class="p-8">
      <div class="mb-8">
@@ -996,31 +1017,82 @@
         }
 
         // Authentication Functions
-        function handleLogin(event) {
-            event.preventDefault();
-            
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const role = document.getElementById('role').value;
-            
-            const validCredentials = {
-                'admin': { password: 'admin123', role: 'admin' },
-                'user': { password: 'user123', role: 'user' }
-            };
-            
-            if (validCredentials[username] && validCredentials[username].password === password && validCredentials[username].role === role) {
-                currentUser = username;
-                userRole = role;
-                
-                localStorage.setItem('currentUser', username);
-                localStorage.setItem('userRole', role);
-                
-                initializeApp();
-                showToast(`Welcome ${username}! Logged in as ${role}`, 'success');
-            } else {
-                showToast('Invalid credentials. Please check username, password, and role.', 'error');
-            }
+        async function handleLogin(event) {
+    event.preventDefault();
+    
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const loginBtn = document.getElementById('login-btn');
+    
+    try {
+        loginBtn.textContent = 'Signing in...';
+        loginBtn.disabled = true;
+
+        // 1. Authenticate with Supabase
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+        if (error) throw error;
+
+        // 2. Auth successful, now fetch the user's role from the 'profiles' table
+        // We assume you created a 'profiles' table as suggested in Part 1
+        const { data: profileData, error: profileError } = await supabaseClient
+            .from('profiles')
+            .select('role')
+            .eq('id', data.user.id)
+            .single();
+
+        // Default to 'user' if no profile found
+        const role = profileData ? profileData.role : 'user'; 
+
+        // 3. Set Session Variables
+        currentUser = email; // or data.user.id if you prefer IDs
+        userRole = role;
+        
+        localStorage.setItem('currentUser', currentUser);
+        localStorage.setItem('userRole', userRole);
+
+        showToast(`Welcome back! Logged in as ${role}`, 'success');
+        initializeApp();
+
+    } catch (error) {
+        console.error('Login error:', error);
+        showToast('Login Failed: ' + error.message, 'error');
+    } finally {
+        loginBtn.textContent = 'Sign In';
+        loginBtn.disabled = false;
+    }
+}
+
+// Optional: Add a simple Sign Up handler for testing
+async function handleSignUp() {
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    
+    if(!email || !password) {
+        showToast('Please enter an email and password to sign up', 'warning');
+        return;
+    }
+
+    const { data, error } = await supabaseClient.auth.signUp({
+        email: email,
+        password: password
+    });
+
+    if (error) {
+        showToast('Sign Up Error: ' + error.message, 'error');
+    } else {
+        // Create the profile entry
+        if (data.user) {
+             await supabaseClient.from('profiles').insert([
+                { id: data.user.id, email: email, role: 'user' }
+            ]);
         }
+        showToast('Sign up successful! Please check your email or sign in.', 'success');
+    }
+}
 
         function logout() {
             const confirmMessage = document.createElement('div');
@@ -1042,23 +1114,31 @@
             document.body.appendChild(confirmMessage);
         }
 
-        function performLogout() {
-            currentUser = null;
-            userRole = null;
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('userRole');
-            
-            document.getElementById('main-content').classList.add('hidden');
-            document.getElementById('main-sidebar').classList.add('hidden');
-            document.getElementById('login-page').classList.add('active');
-            
-            const confirmDialog = document.querySelector('.fixed.inset-0');
-            if (confirmDialog) {
-                confirmDialog.remove();
-            }
-            
-            showToast('Logged out successfully', 'info');
-        }
+        async function performLogout() {
+    try {
+        // Sign out from Supabase
+        await supabaseClient.auth.signOut();
+        
+        // Clear local state
+        currentUser = null;
+        userRole = null;
+        localStorage.removeItem('currentUser');
+        localStorage.removeItem('userRole');
+        
+        document.getElementById('main-content').classList.add('hidden');
+        document.getElementById('main-sidebar').classList.add('hidden');
+        document.getElementById('login-page').classList.add('active');
+        
+        // Remove modal if open
+        const confirmDialog = document.querySelector('.fixed.inset-0');
+        if (confirmDialog) confirmDialog.remove();
+        
+        showToast('Logged out successfully', 'info');
+    } catch (error) {
+        console.error('Logout error:', error);
+        showToast('Error logging out', 'error');
+    }
+}
 
         async function initializeApp() {
             document.getElementById('login-page').classList.remove('active');
@@ -1934,94 +2014,104 @@
             });
         }
 
-        function updateJobStatus(notificationId) {
-            const newStatus = document.getElementById(`status-update-${notificationId}`).value;
-            const statusDate = document.getElementById(`status-date-${notificationId}`).value;
-            const comment = document.getElementById(`status-comment-${notificationId}`).value.trim();
-            const notification = notifications.find(n => n.id === notificationId);
-            
-            if (!notification) {
-                showToast('Job request not found', 'error');
-                return;
-            }
-            
-            if (!comment) {
-                showToast('Description is required for status updates', 'error');
-                document.getElementById(`status-comment-${notificationId}`).focus();
-                return;
-            }
-            
-            if (notification.status === newStatus && !comment) {
-                showToast('No changes detected. Please select a different status or add a description.', 'warning');
-                return;
-            }
-            
-            if (notification.status !== newStatus && !statusDate) {
-                showToast('Please select a date and time for the status update', 'error');
-                return;
-            }
-            
-            const updateTimestamp = statusDate ? new Date(statusDate).toISOString() : new Date().toISOString();
-            const oldStatus = notification.status;
-            
-            if (!notification.statusHistory) {
-                notification.statusHistory = [];
-            }
-            
-            if (newStatus !== oldStatus) {
-                switch (newStatus) {
-                    case 'Planned':
-                        notification.plannedDate = updateTimestamp;
-                        break;
-                    case 'In Progress':
-                        notification.startedDate = updateTimestamp;
-                        break;
-                    case 'Completed':
-                        notification.completedDate = updateTimestamp;
-                        break;
-                }
-                
-                notification.status = newStatus;
-                notification.lastUpdated = updateTimestamp;
-            }
-            
-            const historyEntry = {
-                status: newStatus,
-                timestamp: updateTimestamp,
-                comment: comment || null,
-                updatedBy: currentUser,
-                previousStatus: oldStatus
-            };
-            
-            notification.statusHistory.push(historyEntry);
-            
-            saveNotificationsToLocal();
-            
-            const statusBadge = document.getElementById(`status-badge-${notificationId}`);
-            if (statusBadge) {
-                const statusColors = {
-                    'Open': 'bg-blue-100 text-blue-800 border-blue-200',
-                    'Planned': 'bg-purple-100 text-purple-800 border-purple-200',
-                    'In Progress': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-                    'Completed': 'bg-green-100 text-green-800 border-green-200'
-                };
-                statusBadge.className = `px-3 py-1 text-sm rounded-full border ${statusColors[newStatus]}`;
-                statusBadge.textContent = newStatus;
-            }
-            
-            document.getElementById(`status-date-${notificationId}`).value = '';
-            document.getElementById(`status-comment-${notificationId}`).value = '';
-            
-            const message = newStatus !== oldStatus ? 
-                `Job request #${notificationId} status updated from ${oldStatus} to ${newStatus}` :
-                `Comment added to job request #${notificationId}`;
-            
-            showToast(message, 'success');
-            
-            loadNotificationsPage();
-            updateDashboardMetrics();
-            updateCharts();
+        // Make the function async to handle the network request
+async function updateJobStatus(notificationId) {
+    const newStatus = document.getElementById(`status-update-${notificationId}`).value;
+    const statusDate = document.getElementById(`status-date-${notificationId}`).value;
+    const comment = document.getElementById(`status-comment-${notificationId}`).value.trim();
+    const notification = notifications.find(n => n.id === notificationId);
+    
+    // --- Validation Logic ---
+    if (!notification) { showToast('Job request not found', 'error'); return; }
+    if (!comment) { showToast('Description is required for status updates', 'error'); document.getElementById(`status-comment-${notificationId}`).focus(); return; }
+    if (notification.status === newStatus && !comment) { showToast('No changes detected.', 'warning'); return; }
+    if (notification.status !== newStatus && !statusDate) { showToast('Please select a date and time', 'error'); return; }
+    
+    // --- Prepare Timestamp ---
+    // If user selected a date, use it. Otherwise use "now".
+    const updateTimestamp = statusDate ? new Date(statusDate).toISOString() : new Date().toISOString();
+    const oldStatus = notification.status;
+    
+    // --- 1. Update Local Object (Frontend) ---
+    if (!notification.statusHistory) notification.statusHistory = [];
+    
+    // Update the specific date field based on the NEW status
+    if (newStatus !== oldStatus) {
+        if (newStatus === 'Planned') notification.plannedDate = updateTimestamp;
+        if (newStatus === 'In Progress') notification.startedDate = updateTimestamp;
+        if (newStatus === 'Completed') notification.completedDate = updateTimestamp;
+        
+        notification.status = newStatus;
+        notification.lastUpdated = updateTimestamp;
+    }
+
+    // Add history entry
+    const historyEntry = {
+        status: newStatus,
+        timestamp: updateTimestamp,
+        comment: comment || null,
+        updatedBy: currentUser,
+        previousStatus: oldStatus
+    };
+    notification.statusHistory.push(historyEntry);
+    
+    // Save to LocalStorage immediately
+    saveNotificationsToLocal();
+
+    // --- 2. Update Supabase (Backend) ---
+    try {
+        // Construct the update object strictly
+        const supabaseUpdates = {
+            status: newStatus,
+            last_updated: updateTimestamp, // This ensures this column ALWAYS updates
+            description: notification.description + `\n\n[${new Date().toLocaleDateString()} ${newStatus}]: ${comment}`
+            // status_history: notification.statusHistory // Uncomment if you added a jsonb column
+        };
+
+        // Explicitly add the date columns if they match the current status change
+        if (newStatus === 'Planned') supabaseUpdates.planned_date = updateTimestamp;
+        if (newStatus === 'In Progress') supabaseUpdates.started_date = updateTimestamp;
+        if (newStatus === 'Completed') supabaseUpdates.completed_date = updateTimestamp;
+
+        console.log("📤 Sending to Supabase:", supabaseUpdates); // Debug log
+
+        const { error } = await supabaseClient
+            .from('job_requests')
+            .update(supabaseUpdates)
+            .eq('local_id', notificationId.toString());
+
+        if (error) {
+            console.error('Supabase Error:', error);
+            showToast('⚠️ Status updated locally, but Cloud sync failed', 'warning');
+        } else {
+            console.log('✅ Cloud sync successful');
         }
+    } catch (err) {
+        console.error('Network Error:', err);
+        showToast('⚠️ Network error - Cloud not updated', 'warning');
+    }
+
+    // --- 3. UI Updates ---
+    const statusBadge = document.getElementById(`status-badge-${notificationId}`);
+    if (statusBadge) {
+        const statusColors = {
+            'Open': 'bg-blue-100 text-blue-800 border-blue-200',
+            'Planned': 'bg-purple-100 text-purple-800 border-purple-200',
+            'In Progress': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+            'Completed': 'bg-green-100 text-green-800 border-green-200'
+        };
+        statusBadge.className = `px-3 py-1 text-sm rounded-full border ${statusColors[newStatus]}`;
+        statusBadge.textContent = newStatus;
+    }
+    
+    document.getElementById(`status-date-${notificationId}`).value = '';
+    document.getElementById(`status-comment-${notificationId}`).value = '';
+    
+    showToast(`Job updated to ${newStatus}`, 'success');
+    loadNotificationsPage();
+    updateDashboardMetrics();
+    updateCharts();
+}
 
         // Dashboard filter variables
         let dashboardFilters = {
@@ -2577,6 +2667,37 @@ async function fetchNotificationsFromCloud() {
             } else {
                 console.log('ℹ️ No saved login, showing login page');
             }
+            
+            // Add this inside document.addEventListener('DOMContentLoaded', ...)
+
+// Check active Supabase session on load
+const { data: { session } } = await supabaseClient.auth.getSession();
+
+if (session) {
+    // If session exists, verify role and load app
+    currentUser = session.user.email;
+    
+    // Fetch role again to be safe
+    const { data: profile } = await supabaseClient
+        .from('profiles')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+        
+    userRole = profile ? profile.role : 'user';
+    
+    // Update Local Storage to match Cloud Session
+    localStorage.setItem('currentUser', currentUser);
+    localStorage.setItem('userRole', userRole);
+    
+    console.log('🔄 Session restored for:', currentUser);
+    initializeApp();
+} else {
+    // No session, ensure we are on login page
+    console.log('ℹ️ No active session');
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('userRole');
+}
         });
     </script>
  <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9a0f72ddd3574055',t:'MTc2MzU1MjU5NS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
