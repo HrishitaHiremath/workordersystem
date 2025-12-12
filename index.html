@@ -181,38 +181,44 @@
        </div>
       </div>
      </div>
-     <div class="grid grid-cols-2 md:grid-cols-5 gap-6 mb-8">
-      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
-       <div class="flex items-center justify-between">
-        <div><div class="text-2xl font-bold text-gray-800" id="open-notifications">0</div><div class="text-sm text-gray-600">Open</div></div>
-        <div class="text-purple-500">🔓</div>
-       </div>
-      </div>
-      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
-       <div class="flex items-center justify-between">
-        <div><div class="text-2xl font-bold text-gray-800" id="planned-notifications">0</div><div class="text-sm text-gray-600">Planned</div></div>
-        <div class="text-purple-500">📋</div>
-       </div>
-      </div>
-      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500">
-       <div class="flex items-center justify-between">
-        <div><div class="text-2xl font-bold text-gray-800" id="overdue-notifications">0</div><div class="text-sm text-gray-600">Overdue</div></div>
-        <div class="text-indigo-500">⏰</div>
-       </div>
-      </div>
-      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
-       <div class="flex items-center justify-between">
-        <div><div class="text-2xl font-bold text-gray-800" id="rejected-notifications">0</div><div class="text-sm text-gray-600">Rejected</div></div>
-        <div class="text-red-500">❌</div>
-       </div>
-      </div>
-      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-pink-500">
-       <div class="flex items-center justify-between">
-        <div><div class="text-2xl font-bold text-gray-800" id="avg-completion-days">0</div><div class="text-sm text-gray-600">Avg Days to Complete</div></div>
-        <div class="text-pink-500">📊</div>
-       </div>
-      </div>
-     </div>
+     <div class="grid grid-cols-2 md:grid-cols-6 gap-6 mb-8">
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+        <div class="flex items-center justify-between">
+            <div><div class="text-2xl font-bold text-gray-800" id="open-notifications">0</div><div class="text-sm text-gray-600">Open</div></div>
+            <div class="text-purple-500">🔓</div>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
+        <div class="flex items-center justify-between">
+            <div><div class="text-2xl font-bold text-gray-800" id="planned-notifications">0</div><div class="text-sm text-gray-600">Planned</div></div>
+            <div class="text-purple-500">📋</div>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
+        <div class="flex items-center justify-between">
+            <div><div class="text-2xl font-bold text-gray-800" id="completed-notifications">0</div><div class="text-sm text-gray-600">Completed</div></div>
+            <div class="text-green-500">✅</div>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500">
+        <div class="flex items-center justify-between">
+            <div><div class="text-2xl font-bold text-gray-800" id="overdue-notifications">0</div><div class="text-sm text-gray-600">Overdue</div></div>
+            <div class="text-indigo-500">⏰</div>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
+        <div class="flex items-center justify-between">
+            <div><div class="text-2xl font-bold text-gray-800" id="rejected-notifications">0</div><div class="text-sm text-gray-600">Rejected</div></div>
+            <div class="text-red-500">❌</div>
+        </div>
+    </div>
+    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-pink-500">
+        <div class="flex items-center justify-between">
+            <div><div class="text-2xl font-bold text-gray-800" id="avg-completion-days">0</div><div class="text-sm text-gray-600">Avg Days</div></div>
+            <div class="text-pink-500">📊</div>
+        </div>
+    </div>
+</div>
      <div class="grid md:grid-cols-2 gap-8 mb-8">
       <div class="bg-white rounded-xl shadow-lg p-6">
        <h3 class="text-lg font-semibold text-gray-800 mb-4">Priority Distribution</h3>
@@ -923,6 +929,7 @@
             const counts = active.reduce((acc, n) => { acc[n.status] = (acc[n.status] || 0) + 1; return acc; }, {});
             document.getElementById('open-notifications').textContent = counts['Open'] || 0;
             document.getElementById('planned-notifications').textContent = counts['Planned'] || 0;
+            document.getElementById('completed-notifications').textContent = counts['Completed'] || 0;
             document.getElementById('rejected-notifications').textContent = counts['Rejected'] || 0;
             document.getElementById('critical-alerts').textContent = active.filter(n => n.priority === 'critical').length;
             
@@ -1134,3 +1141,4 @@
     </script>
  </body>
 </html>
+
