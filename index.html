@@ -3,39 +3,23 @@
  <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Work Order Notification System</title>
+  <title>Work Order System V6.0 (User Management)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        body { 
-            font-family: 'Inter', sans-serif; 
-            box-sizing: border-box;
-        }
-        
+        body { font-family: 'Inter', sans-serif; box-sizing: border-box; }
         .page { display: none; }
         .page.active { display: block; }
+        .nav-item.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
         
-        .nav-item.active {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-        
-        /* Toast Animations */
+        /* Animations */
         .notification-enter { animation: slideIn 0.3s ease-out; }
         .notification-exit { animation: slideOut 0.3s ease-in forwards; }
-        
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        @keyframes slideOut {
-            from { transform: translateX(0); opacity: 1; }
-            to { transform: translateX(100%); opacity: 0; }
-        }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideOut { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
 
         .sidebar { background: linear-gradient(180deg, #1e3a8a 0%, #1e40af 100%); }
         .login-container { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
@@ -60,9 +44,7 @@
  <body class="bg-gradient-to-br from-blue-50 to-indigo-50 min-h-screen">
   
   <div id="save-indicator-container" class="fixed top-4 right-4 z-50 bg-white px-4 py-2 rounded-lg shadow-lg border hidden">
-   <div id="save-indicator" class="text-sm font-medium text-green-600">
-    ✅ Connected to Database
-   </div>
+   <div id="save-indicator" class="text-sm font-medium text-green-600">✅ Connected to Database</div>
   </div>
 
   <div id="login-page" class="page active">
@@ -76,25 +58,14 @@
      
      <form id="login-form" onsubmit="handleAuth(event)">
       <div class="space-y-6">
-       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Email</label> 
-        <input type="email" id="username" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter your email">
-       </div>
-       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label> 
-        <input type="password" id="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter your password">
-       </div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Email</label> <input type="email" id="username" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter your email"></div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Password</label> <input type="password" id="password" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent" placeholder="Enter your password"></div>
        <button type="submit" id="auth-btn" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition-all transform hover:scale-105"> Sign In </button>
       </div>
      </form>
 
      <div class="mt-6 text-center">
-        <p class="text-sm text-gray-600">
-            <span id="auth-switch-text">Don't have an account?</span> 
-            <button onclick="toggleAuthMode()" class="text-indigo-600 font-semibold hover:text-indigo-800 transition-colors ml-1">
-                <span id="auth-switch-btn">Sign Up</span>
-            </button>
-        </p>
+        <p class="text-sm text-gray-600"><span id="auth-switch-text">Don't have an account?</span> <button onclick="toggleAuthMode()" class="text-indigo-600 font-semibold hover:text-indigo-800 transition-colors ml-1"><span id="auth-switch-btn">Sign Up</span></button></p>
      </div>
     </div>
    </div>
@@ -103,7 +74,7 @@
   <div id="main-sidebar" class="fixed left-0 top-0 h-full w-64 sidebar text-white z-30 hidden">
    <div class="p-6">
     <div class="flex items-center justify-between mb-8">
-     <h1 class="text-xl font-bold">🔧 Work Order System</h1>
+     <h1 class="text-xl font-bold">🔧 Work Order V6</h1>
      <button onclick="logout()" class="text-white hover:text-red-300 transition-colors" title="Logout">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
      </button>
@@ -116,1029 +87,974 @@
       <a href="#" onclick="showPage('notifications')" class="nav-item flex items-center p-3 rounded-lg hover:bg-white hover:bg-opacity-10 transition-all" id="nav-notifications">
       <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
       <span id="nav-notifications-text">My Job Requests</span> <span id="notification-badge" class="ml-auto bg-red-500 text-white text-xs px-2 py-1 rounded-full">0</span> </a>
+      
+      <a href="#" onclick="showPage('users')" class="nav-item flex items-center p-3 rounded-lg hover:bg-white hover:bg-opacity-10 transition-all admin-only" id="nav-users">
+        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+        Manage Users
+      </a>
     </nav>
    </div>
    <div class="absolute bottom-0 left-0 right-0 p-6 border-t border-white border-opacity-20">
     <div class="flex items-center">
-     <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-      <svg class="w-6 h-6" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
-     </div>
-     <div class="ml-3">
-      <div class="text-sm font-medium" id="user-display-name">User</div>
-      <div class="text-xs opacity-75" id="user-display-role">Role</div>
-     </div>
+     <div class="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center"><svg class="w-6 h-6" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg></div>
+     <div class="ml-3"><div class="text-sm font-medium" id="user-display-name">User</div><div class="text-xs opacity-75" id="user-display-role">Role</div></div>
     </div>
    </div>
   </div>
 
   <div id="mobile-overlay" class="mobile-overlay" onclick="toggleMobileMenu()"></div>
-  <button id="mobile-menu-btn" class="fixed top-4 left-4 z-50 bg-indigo-600 text-white p-3 rounded-lg shadow-lg md:hidden hidden" onclick="toggleMobileMenu()">
-   <svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-  </button> 
+  <button id="mobile-menu-btn" class="fixed top-4 left-4 z-50 bg-indigo-600 text-white p-3 rounded-lg shadow-lg md:hidden hidden" onclick="toggleMobileMenu()"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg></button> 
    
   <div id="main-content" class="ml-0 md:ml-64 min-h-screen hidden">
+   
    <div id="dashboard-page" class="page active">
     <div class="p-8">
-     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-800 mb-2">📊 Dashboard Overview</h1>
-      <p class="text-gray-600">Real-time insights into your job requests</p>
+     <div class="mb-8"><h1 class="text-3xl font-bold text-gray-800 mb-2">📊 Dashboard Overview</h1><p class="text-gray-600">Real-time insights into your job requests</p>
       <div class="mt-6 bg-white rounded-xl shadow-lg p-6">
        <h3 class="text-lg font-semibold text-gray-800 mb-4">📋 Filters</h3>
        <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
-        <div><label class="block text-sm font-medium text-gray-700 mb-2">Status</label> <select id="filter-status" onchange="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"> <option value="">All Status</option> <option value="Open">Open</option> <option value="Planned">Planned</option> <option value="Completed">Completed</option> <option value="Rejected">Rejected</option> </select></div>
-        <div><label class="block text-sm font-medium text-gray-700 mb-2">Priority</label> <select id="filter-priority" onchange="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"> <option value="">All Priorities</option> <option value="critical">Critical</option> <option value="high">High</option> <option value="medium">Medium</option> <option value="low">Low</option> </select></div>
-        <div><label class="block text-sm font-medium text-gray-700 mb-2">Department</label> <select id="filter-department" onchange="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"> <option value="">All Departments</option> </select></div>
-        <div><label class="block text-sm font-medium text-gray-700 mb-2">Job Type</label> <select id="filter-job-type" onchange="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"> <option value="">All Job Types</option> <option value="Breakdown">Breakdown</option> <option value="Need Base">Need Base</option> <option value="Shutdown">Shutdown</option> </select></div>
-        <div><label class="block text-sm font-medium text-gray-700 mb-2">Date Range</label> <select id="filter-date-range" onchange="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"> <option value="">All Time</option> <option value="today">Today</option> <option value="week">This Week</option> <option value="month">This Month</option> <option value="overdue">Overdue Only</option> </select></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Status</label> <select id="filter-status" onchange="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"> <option value="">All Status</option> <option value="Open">Open</option> <option value="Planned">Planned</option> <option value="Completed">Completed</option> <option value="Rejected">Rejected</option> </select></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Priority</label> <select id="filter-priority" onchange="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"> <option value="">All Priorities</option> <option value="critical">Critical</option> <option value="high">High</option> <option value="medium">Medium</option> <option value="low">Low</option> </select></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Department</label> <select id="filter-department" onchange="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"> <option value="">All Departments</option> </select></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Job Type</label> <select id="filter-job-type" onchange="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"> <option value="">All Job Types</option> <option value="Breakdown">Breakdown</option> <option value="Need Base">Need Base</option> <option value="Shutdown">Shutdown</option> </select></div>
+        <div><label class="block text-sm font-medium text-gray-700 mb-2">Date Range</label> <select id="filter-date-range" onchange="applyFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"> <option value="">All Time</option> <option value="today">Today</option> <option value="week">This Week</option> <option value="month">This Month</option> <option value="overdue">Overdue Only</option> </select></div>
         <div class="flex items-end"><button onclick="clearFilters()" class="w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"> Clear Filters </button></div>
        </div>
        <div id="active-filters" class="mt-4 flex flex-wrap gap-2"></div>
       </div>
      </div>
-     <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
-       <div class="flex items-center justify-between">
-        <div><div class="text-2xl font-bold text-gray-800" id="total-notifications">0</div><div class="text-sm text-gray-600">Total Notifications</div></div>
-        <div class="text-blue-500"><svg class="w-8 h-8" fill="currentColor" viewbox="0 0 20 20"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div>
-       </div>
-      </div>
-      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
-       <div class="flex items-center justify-between">
-        <div><div class="text-2xl font-bold text-gray-800" id="completion-rate">0%</div><div class="text-sm text-gray-600">Completion Rate</div></div>
-        <div class="text-green-500"><svg class="w-8 h-8" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg></div>
-       </div>
-      </div>
-      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500">
-       <div class="flex items-center justify-between">
-        <div><div class="text-2xl font-bold text-gray-800" id="avg-response-time">0h</div><div class="text-sm text-gray-600">Avg Response Time</div></div>
-        <div class="text-orange-500"><svg class="w-8 h-8" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path></svg></div>
-       </div>
-      </div>
-      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
-       <div class="flex items-center justify-between">
-        <div><div class="text-2xl font-bold text-gray-800" id="critical-alerts">0</div><div class="text-sm text-gray-600">Critical Alerts</div></div>
-        <div class="text-red-500"><svg class="w-8 h-8" fill="currentColor" viewbox="0 0 20 20"><path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path></svg></div>
-       </div>
-      </div>
-     </div>
+     
      <div class="grid grid-cols-2 md:grid-cols-6 gap-6 mb-8">
-    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
-        <div class="flex items-center justify-between">
-            <div><div class="text-2xl font-bold text-gray-800" id="open-notifications">0</div><div class="text-sm text-gray-600">Open</div></div>
-            <div class="text-purple-500">🔓</div>
-        </div>
-    </div>
-    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500">
-        <div class="flex items-center justify-between">
-            <div><div class="text-2xl font-bold text-gray-800" id="planned-notifications">0</div><div class="text-sm text-gray-600">Planned</div></div>
-            <div class="text-purple-500">📋</div>
-        </div>
-    </div>
-    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500">
-        <div class="flex items-center justify-between">
-            <div><div class="text-2xl font-bold text-gray-800" id="completed-notifications">0</div><div class="text-sm text-gray-600">Completed</div></div>
-            <div class="text-green-500">✅</div>
-        </div>
-    </div>
-    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500">
-        <div class="flex items-center justify-between">
-            <div><div class="text-2xl font-bold text-gray-800" id="overdue-notifications">0</div><div class="text-sm text-gray-600">Overdue</div></div>
-            <div class="text-indigo-500">⏰</div>
-        </div>
-    </div>
-    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
-        <div class="flex items-center justify-between">
-            <div><div class="text-2xl font-bold text-gray-800" id="rejected-notifications">0</div><div class="text-sm text-gray-600">Rejected</div></div>
-            <div class="text-red-500">❌</div>
-        </div>
-    </div>
-    <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-pink-500">
-        <div class="flex items-center justify-between">
-            <div><div class="text-2xl font-bold text-gray-800" id="avg-completion-days">0</div><div class="text-sm text-gray-600">Avg Days</div></div>
-            <div class="text-pink-500">📊</div>
-        </div>
-    </div>
-</div>
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500"><div><div class="text-2xl font-bold text-gray-800" id="open-notifications">0</div><div class="text-sm text-gray-600">Open</div></div><div class="text-purple-500">🔓</div></div>
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-purple-500"><div><div class="text-2xl font-bold text-gray-800" id="planned-notifications">0</div><div class="text-sm text-gray-600">Planned</div></div><div class="text-purple-500">📋</div></div>
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500"><div><div class="text-2xl font-bold text-gray-800" id="completed-notifications">0</div><div class="text-sm text-gray-600">Completed</div></div><div class="text-green-500">✅</div></div>
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-indigo-500"><div><div class="text-2xl font-bold text-gray-800" id="overdue-notifications">0</div><div class="text-sm text-gray-600">Overdue</div></div><div class="text-indigo-500">⏰</div></div>
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500"><div><div class="text-2xl font-bold text-gray-800" id="rejected-notifications">0</div><div class="text-sm text-gray-600">Rejected</div></div><div class="text-red-500">❌</div></div>
+      <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-pink-500"><div><div class="text-2xl font-bold text-gray-800" id="avg-completion-days">0</div><div class="text-sm text-gray-600">Avg Days</div></div><div class="text-pink-500">📊</div></div>
+     </div>
+     
+     <div class="grid md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500"><div><div class="text-2xl font-bold text-gray-800" id="total-notifications">0</div><div class="text-sm text-gray-600">Total</div></div></div>
+        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500"><div><div class="text-2xl font-bold text-gray-800" id="completion-rate">0%</div><div class="text-sm text-gray-600">Rate</div></div></div>
+        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-orange-500"><div><div class="text-2xl font-bold text-gray-800" id="avg-response-time">0h</div><div class="text-sm text-gray-600">Response</div></div></div>
+        <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500"><div><div class="text-2xl font-bold text-gray-800" id="critical-alerts">0</div><div class="text-sm text-gray-600">Critical</div></div></div>
+     </div>
+
      <div class="grid md:grid-cols-2 gap-8 mb-8">
-      <div class="bg-white rounded-xl shadow-lg p-6">
-       <h3 class="text-lg font-semibold text-gray-800 mb-4">Priority Distribution</h3>
-       <div class="relative h-64"><canvas id="priorityChart"></canvas></div>
-      </div>
-      <div class="bg-white rounded-xl shadow-lg p-6">
-       <h3 class="text-lg font-semibold text-gray-800 mb-4">Status Overview</h3>
-       <div class="relative h-64"><canvas id="statusChart"></canvas></div>
-      </div>
+      <div class="bg-white rounded-xl shadow-lg p-6"><h3 class="text-lg font-semibold text-gray-800 mb-4">Priority Distribution</h3><div class="relative h-64"><canvas id="priorityChart"></canvas></div></div>
+      <div class="bg-white rounded-xl shadow-lg p-6"><h3 class="text-lg font-semibold text-gray-800 mb-4">Status Overview</h3><div class="relative h-64"><canvas id="statusChart"></canvas></div></div>
      </div>
      <div class="grid md:grid-cols-2 gap-8 mb-8">
-      <div class="bg-white rounded-xl shadow-lg p-6">
-       <h3 class="text-lg font-semibold text-gray-800 mb-4">Department Workload</h3>
-       <div id="department-stats" class="space-y-3"></div>
-      </div>
-      <div class="bg-white rounded-xl shadow-lg p-6">
-       <h3 class="text-lg font-semibold text-gray-800 mb-4">Most Used Techniques</h3>
-       <div id="technique-stats" class="space-y-3"></div>
-      </div>
+      <div class="bg-white rounded-xl shadow-lg p-6"><h3 class="text-lg font-semibold text-gray-800 mb-4">Department Workload</h3><div id="department-stats" class="space-y-3"></div></div>
+      <div class="bg-white rounded-xl shadow-lg p-6"><h3 class="text-lg font-semibold text-gray-800 mb-4">Most Used Techniques</h3><div id="technique-stats" class="space-y-3"></div></div>
      </div>
-     <div class="bg-white rounded-xl shadow-lg p-6">
-      <h3 class="text-lg font-semibold text-gray-800 mb-4">Recent Activity</h3>
-      <div id="recent-activity" class="space-y-3"></div>
-     </div>
+     <div class="bg-white rounded-xl shadow-lg p-6"><h3 class="text-lg font-semibold text-gray-800 mb-4">Recent Activity</h3><div id="recent-activity" class="space-y-3"></div></div>
     </div>
    </div>
 
    <div id="create-page" class="page">
     <div class="p-8">
-     <div class="mb-8">
-      <h1 class="text-3xl font-bold text-gray-800 mb-2">➕ Create Job Request</h1>
-      <p class="text-gray-600">Fill out the form below to create a new job request</p>
-     </div>
+     <div class="mb-8"><h1 class="text-3xl font-bold text-gray-800 mb-2">➕ Create Job Request</h1><p class="text-gray-600">Fill out the form below to create a new job request</p></div>
      <div class="bg-white rounded-xl shadow-lg p-8">
       <div class="grid md:grid-cols-2 gap-6">
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Date *</label> <input type="date" id="date-input" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">User ID *</label> <input type="text" id="user-id-input" placeholder="Enter User ID" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Department *</label> <select id="department-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"> <option value="">Select Department</option> </select></div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Section *</label> <select id="section-select" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100"> <option value="">Select Section</option> </select> <input type="text" id="section-custom-input" placeholder="Enter custom section name..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent mt-2 hidden"></div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Component *</label> <select id="component-select" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100"> <option value="">Select Component</option> </select> <input type="text" id="component-custom-input" placeholder="Enter custom component name..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent mt-2 hidden"></div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Component Section *</label> <select id="component-section-select" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100"> <option value="">Select Component Section</option> </select> <input type="text" id="component-section-custom-input" placeholder="Enter custom component section name..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent mt-2 hidden"></div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Equipment *</label> <select id="equipment-select" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:bg-gray-100"> <option value="">Select Equipment</option> </select> <input type="text" id="equipment-custom-input" placeholder="Enter custom equipment name..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent mt-2 hidden"></div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Equipment SAP ID</label> <input type="text" id="sap-id-input" placeholder="Auto-filled when equipment selected" readonly class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"></div>
-       <div id="manual-sap-container" class="col-span-2 hidden"><label class="block text-sm font-medium text-gray-700 mb-2"> <span class="text-red-600">⚠️</span> Manual SAP ID Entry <span class="text-sm text-red-600">(Required - SAP ID missing from database)</span> </label> <input type="text" id="manual-sap-input" placeholder="Enter SAP ID for this equipment" class="w-full px-4 py-3 border-2 border-yellow-400 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500 bg-yellow-50">
-        <div class="mt-2 flex items-center text-sm"><button type="button" id="save-sap-btn" onclick="saveManualSapId()" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm mr-3"> 💾 Save to Database </button> <span class="text-gray-600">This will update the equipment database permanently</span></div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Date *</label> <input type="date" id="date-input" class="w-full px-4 py-3 border border-gray-300 rounded-lg"></div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">User ID *</label> <input type="text" id="user-id-input" placeholder="Enter User ID" class="w-full px-4 py-3 border border-gray-300 rounded-lg"></div>
+       
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Department *</label> <select id="department-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg"> <option value="">Select Department</option> </select></div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Section *</label> <select id="section-select" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"> <option value="">Select Section</option> </select> <input type="text" id="section-custom-input" placeholder="Enter custom section..." class="w-full px-4 py-3 border border-gray-300 rounded-lg mt-2 hidden"></div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Component *</label> <select id="component-select" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"> <option value="">Select Component</option> </select> <input type="text" id="component-custom-input" placeholder="Enter custom component..." class="w-full px-4 py-3 border border-gray-300 rounded-lg mt-2 hidden"></div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Component Section *</label> <select id="component-section-select" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"> <option value="">Select Component Section</option> </select> <input type="text" id="component-section-custom-input" placeholder="Enter custom component section..." class="w-full px-4 py-3 border border-gray-300 rounded-lg mt-2 hidden"></div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Equipment *</label> <select id="equipment-select" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50"> <option value="">Select Equipment</option> </select> <input type="text" id="equipment-custom-input" placeholder="Enter custom equipment..." class="w-full px-4 py-3 border border-gray-300 rounded-lg mt-2 hidden"></div>
+       
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Equipment SAP ID</label> <input type="text" id="sap-id-input" placeholder="Auto-filled" readonly class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600"></div>
+       <div id="manual-sap-container" class="col-span-2 hidden"><label class="block text-sm font-medium text-gray-700 mb-2"> <span class="text-red-600">⚠️</span> Manual SAP ID Entry </label> <input type="text" id="manual-sap-input" placeholder="Enter SAP ID" class="w-full px-4 py-3 border-2 border-yellow-400 rounded-lg bg-yellow-50"><button type="button" onclick="saveManualSapId()" class="mt-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm">💾 Save to Database</button></div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Category *</label> <select id="category-select" required class="w-full px-4 py-3 border border-gray-300 rounded-lg"> <option value="">Select Category</option> <option value="A+">A+</option> <option value="A">A</option> <option value="B">B</option> <option value="C">C</option> </select></div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Type of Job *</label> <select id="job-type-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg"> <option value="">Select Job Type</option> <option value="Need Base">Need Base</option> <option value="Shutdown">Shutdown</option> <option value="Breakdown">Breakdown</option> </select></div>
+       
+       <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Required Technique *</label>
+            <select id="technique-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg">
+                <option value="">Select Technique</option>
+                <option value="DP">DP</option>
+                <option value="UT">UT</option>
+                <option value="MPT">MPT</option>
+                <option value="DP-UT">DP-UT</option>
+                <option value="DP-UT-MPT">DP-UT-MPT</option>
+                <option value="Flow Measurement">Flow Measurement</option>
+                <option value="Laser Shaft Alignment">Laser Shaft Alignment</option>
+                <option value="Vibration Checking">Vibration Checking</option>
+                <option value="In-Situ Dynamic Balancing">In-Situ Dynamic Balancing</option>
+                <option value="Thermography">Thermography</option>
+                <option value="Ultrasonic Thickness Measurement">Ultrasonic Thickness Measurement</option>
+                <option value="Rail UT">Rail UT</option>
+                <option value="Wire Rope NDT">Wire Rope NDT</option>
+                <option value="Others">Others</option>
+            </select>
        </div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Category *</label> <select id="category-select" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"> <option value="">Select Category</option> <option value="A+">A+</option> <option value="A">A</option> <option value="B">B</option> <option value="C">C</option> </select></div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Type of Job *</label> <select id="job-type-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"> <option value="">Select Job Type</option> <option value="Need Base">Need Base</option> <option value="Shutdown">Shutdown</option> <option value="Breakdown">Breakdown</option> </select></div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Required Technique *</label> <select id="technique-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"> <option value="">Select Technique</option> <option value="DP">DP</option> <option value="UT">UT</option> <option value="MPT">MPT</option> <option value="DP-UT">DP-UT</option> <option value="DP-UT-MPT">DP-UT-MPT</option> <option value="Flow Measurement">Flow Measurement</option> <option value="Laser Shaft Alignment">Laser Shaft Alignment</option> <option value="Vibration Checking">Vibration Checking</option> <option value="In-Situ Dynamic Balancing">In-Situ Dynamic Balancing</option> <option value="Thermography">Thermography</option> <option value="Ultrasonic Thickness Measurement">Ultrasonic Thickness Measurement</option> <option value="Rail UT">Rail UT</option> <option value="Wire Rope NDT">Wire Rope NDT</option> <option value="Others">Others</option> </select></div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Expected Finish Date *</label> <input type="date" id="expected-finish-date-input" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Job Status *</label> <select id="status-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"> <option value="Open">Open</option> <option value="Planned" class="admin-only">Planned</option> <option value="Completed" class="admin-only">Completed</option> </select></div>
+
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Expected Finish Date *</label> <input type="date" id="expected-finish-date-input" class="w-full px-4 py-3 border border-gray-300 rounded-lg"></div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Job Status *</label> <select id="status-select" class="w-full px-4 py-3 border border-gray-300 rounded-lg"> <option value="Open">Open</option> <option value="Planned" class="admin-only">Planned</option> <option value="Completed" class="admin-only">Completed</option> </select></div>
       </div>
-      <div class="mt-6"><label class="block text-sm font-medium text-gray-700 mb-2">Work Description *</label> <textarea id="description-input" rows="4" placeholder="Describe the work to be performed..." class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"></textarea></div>
-      <div class="mt-6"><label class="block text-sm font-medium text-gray-700 mb-3">Priority Level</label>
-       <div class="grid grid-cols-4 gap-2"><button type="button" onclick="setPriority('low')" id="priority-low" class="priority-btn px-4 py-2 rounded-lg border-2 border-green-200 bg-green-50 text-green-700 hover:bg-green-100 transition-all"> 🟢 Low </button> <button type="button" onclick="setPriority('medium')" id="priority-medium" class="priority-btn px-4 py-2 rounded-lg border-2 border-yellow-200 bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-all"> 🟡 Medium </button> <button type="button" onclick="setPriority('high')" id="priority-high" class="priority-btn px-4 py-2 rounded-lg border-2 border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 transition-all"> 🟠 High </button> <button type="button" onclick="setPriority('critical')" id="priority-critical" class="priority-btn px-4 py-2 rounded-lg border-2 border-red-200 bg-red-50 text-red-700 hover:bg-red-100 transition-all"> 🔴 Critical </button></div>
-      </div>
-      <div class="flex gap-4 mt-8"><button onclick="createNotification()" id="create-btn" class="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700 transition-all transform hover:scale-105"> <span class="flex items-center justify-center"><svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg> Create Job Request </span> </button> <button onclick="clearForm()" class="bg-red-100 text-red-700 px-6 py-3 rounded-lg font-medium hover:bg-red-200 transition-all transform hover:scale-105"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div>
+      <div class="mt-6"><label class="block text-sm font-medium text-gray-700 mb-2">Work Description *</label> <textarea id="description-input" rows="4" placeholder="Describe the work to be performed..." class="w-full px-4 py-3 border border-gray-300 rounded-lg"></textarea></div>
+      <div class="mt-6"><label class="block text-sm font-medium text-gray-700 mb-3">Priority Level</label><div class="grid grid-cols-4 gap-2"><button type="button" onclick="setPriority('low')" id="priority-low" class="priority-btn px-4 py-2 rounded-lg border-2 border-green-200 bg-green-50 text-green-700">🟢 Low</button> <button type="button" onclick="setPriority('medium')" id="priority-medium" class="priority-btn px-4 py-2 rounded-lg border-2 border-yellow-200 bg-yellow-50 text-yellow-700">🟡 Medium</button> <button type="button" onclick="setPriority('high')" id="priority-high" class="priority-btn px-4 py-2 rounded-lg border-2 border-orange-200 bg-orange-50 text-orange-700">🟠 High</button> <button type="button" onclick="setPriority('critical')" id="priority-critical" class="priority-btn px-4 py-2 rounded-lg border-2 border-red-200 bg-red-50 text-red-700">🔴 Critical</button></div></div>
+      <div class="flex gap-4 mt-8"><button onclick="createNotification()" id="create-btn" class="flex-1 bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-indigo-700">Create Job Request</button> <button onclick="clearForm()" class="bg-red-100 text-red-700 px-6 py-3 rounded-lg font-medium hover:bg-red-200">Clear</button></div>
      </div>
     </div>
    </div>
 
    <div id="notifications-page" class="page">
     <div class="p-8">
-     <div class="mb-8 flex justify-between items-center">
-      <div>
-       <h1 class="text-3xl font-bold text-gray-800 mb-2" id="notifications-title">📋 My Job Requests</h1>
-       <p class="text-gray-600" id="notifications-subtitle">Manage and track your job requests</p>
-      </div><button onclick="exportToExcel()" class="bg-green-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-700 transition-all transform hover:scale-105 flex items-center gap-2">
-       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg> Export to Excel </button>
-     </div>
+     <div class="mb-8 flex justify-between items-center"><div><h1 class="text-3xl font-bold text-gray-800 mb-2">📋 My Job Requests</h1><p class="text-gray-600">Manage and track your job requests</p></div><button onclick="exportToExcel()" class="bg-green-600 text-white px-6 py-3 rounded-lg">Export to Excel</button></div>
      <div id="notifications-filters-container" class="mb-6 bg-white rounded-xl shadow-lg p-6 hidden">
-      <h3 class="text-lg font-semibold text-gray-800 mb-4">🔍 Filter Job Requests</h3>
       <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Department</label> <select id="notif-filter-department" onchange="applyNotificationsFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"> <option value="">All Departments</option> </select></div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Status</label> <select id="notif-filter-status" onchange="applyNotificationsFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"> <option value="">All Status</option> <option value="Open">Open</option> <option value="Planned">Planned</option> <option value="Completed">Completed</option> <option value="Rejected">Rejected</option> </select></div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Date From</label> <input type="date" id="notif-filter-date-from" onchange="applyNotificationsFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"></div>
-       <div><label class="block text-sm font-medium text-gray-700 mb-2">Date To</label> <input type="date" id="notif-filter-date-to" onchange="applyNotificationsFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500"></div>
-       <div class="flex items-end"><button onclick="clearNotificationsFilters()" class="w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm"> Clear Filters </button></div>
+       <div>
+         <label class="block text-sm font-medium text-gray-700 mb-2">Department</label> 
+         <select id="notif-filter-department" onchange="applyNotificationsFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg"> 
+           <option value="">All Departments</option> 
+         </select>
+       </div>
+       <div>
+         <label class="block text-sm font-medium text-gray-700 mb-2">Status</label> 
+         <select id="notif-filter-status" onchange="applyNotificationsFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg"> 
+           <option value="">All Status</option>
+           <option value="Open">Open</option>
+           <option value="Planned">Planned</option>
+           <option value="Completed">Completed</option>
+           <option value="Rejected">Rejected</option>
+         </select>
+       </div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Date From</label> <input type="date" id="notif-filter-date-from" onchange="applyNotificationsFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+       <div><label class="block text-sm font-medium text-gray-700 mb-2">Date To</label> <input type="date" id="notif-filter-date-to" onchange="applyNotificationsFilters()" class="w-full px-3 py-2 border border-gray-300 rounded-lg"></div>
+       <div class="flex items-end"><button onclick="clearNotificationsFilters()" class="w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">Clear Filters</button></div>
       </div>
-      <div id="notif-active-filters" class="mt-4 flex flex-wrap gap-2"></div>
      </div>
      <div id="notifications-list" class="space-y-4"></div>
     </div>
    </div>
+
+   <div id="users-page" class="page">
+    <div class="p-8">
+     <div class="mb-8">
+       <h1 class="text-3xl font-bold text-gray-800 mb-2">👥 User Management</h1>
+       <p class="text-gray-600">Control user roles and access permissions.</p>
+     </div>
+     
+     <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-200">
+       <table class="min-w-full divide-y divide-gray-200">
+         <thead class="bg-gray-50">
+           <tr>
+             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Email</th>
+             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Joined Date</th>
+             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Role</th>
+             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+           </tr>
+         </thead>
+         <tbody id="users-table-body" class="bg-white divide-y divide-gray-200">
+           </tbody>
+       </table>
+     </div>
+    </div>
+   </div>
+
   </div>
 
   <div id="notification-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2"></div>
 
   <script>
-        // ---------------------------------------------------------
-        // 1. SUPABASE CONFIGURATION & GLOBAL VARIABLES
-        // ---------------------------------------------------------
-        const SUPABASE_URL = 'https://ygutodotnycpiwpeblaq.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlndXRvZG90bnljcGl3cGVibGFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1NjI3NTUsImV4cCI6MjA2ODEzODc1NX0.l06WQ-AcBEeDV1IfQChiGhOz1tDw-MNr-jbMUGBFOTM';
-        const { createClient } = supabase;
-        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // 1. CONFIGURATION
+    const SUPABASE_URL = 'https://ygutodotnycpiwpeblaq.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlndXRvZG90bnljcGl3cGVibGFxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTI1NjI3NTUsImV4cCI6MjA2ODEzODc1NX0.l06WQ-AcBEeDV1IfQChiGhOz1tDw-MNr-jbMUGBFOTM';
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let currentUser = null;
-        let userRole = null;
-        let notifications = [];
-        let equipmentData = [];
-        let equipmentHierarchy = {};
-        let currentPriority = 'medium';
-        let isSignUpMode = false;
+    // SOP LINKS CONFIGURATION
+    const SOP_URLS = {
+        'DP': 'https://tslapps.tatasteel.co.in/GDCS/DownloadScanDoc.aspx?DocId=IMS%2fM%2fSS%2fCMM%2fMED%2fCBM%2fSOP%2f07&fname=07NDTSOPOFDPTEST.pdf',
+        'UT': 'https://tslapps.tatasteel.co.in/GDCS/DownloadScanDoc.aspx?DocId=IMS%2fM%2fSS%2fCMM%2fMED%2fCBM%2fSOP%2f09&fname=09NDTSOPOFUTFOR.pdf',
+        'MPT': 'https://tslapps.tatasteel.co.in/GDCS/DownloadScanDoc.aspx?DocId=IMS%2fM%2fSS%2fCMM%2fMED%2fCBM%2fSOP%2f17&fname=17SOPOFMAGNETIC.pdf',
+        'DP-UT': 'https://tslapps.tatasteel.co.in/GDCS/DownloadScanDoc.aspx?DocId=IMS%2fM%2fSS%2fCMM%2fMED%2fCBM%2fSOP%2f09&fname=09NDTSOPOFUTFOR.pdf',
+        'DP-UT-MPT': 'https://tslapps.tatasteel.co.in/GDCS/DownloadScanDoc.aspx?DocId=IMS%2fM%2fSS%2fCMM%2fMED%2fCBM%2fSOP%2f09&fname=09NDTSOPOFUTFOR.pdf',
+        'Flow Measurement': 'https://tslapps.tatasteel.co.in/GDCS/DownloadScanDoc.aspx?DocId=IMS%2fM%2fSS%2fCMM%2fMED%2fCBM%2fSOP%2f10&fname=10NDTSOPOFFLOWM.pdf',
+        'Laser Shaft Alignment': 'https://tslapps.tatasteel.co.in/GDCS/DownloadScanDoc.aspx?DocId=IMS%2fM%2fSS%2fCMM%2fMED%2fCBM%2fSOP%2f18&fname=18SOPOFLASERALI.pdf',
+        'Vibration Checking': 'https://tslapps.tatasteel.co.in/GDCS/DownloadScanDoc.aspx?DocId=IMS%2fM%2fSS%2fCMM%2fMED%2fCBM%2fSOP%2f02&fname=02SOPOFVIBRATIO.pdf',
+        'In-Situ Dynamic Balancing': 'https://tslapps.tatasteel.co.in/GDCS/DownloadScanDoc.aspx?DocId=IMS%2fM%2fSS%2fCMM%2fMED%2fCBM%2fSOP%2f02&fname=02SOPOFVIBRATIO.pdf',
+        'Thermography': 'https://tslapps.tatasteel.co.in/GDCS/DownloadScanDoc.aspx?DocId=IMS%2fM%2fSS%2fCMM%2fMED%2fCBM%2fSOP%2f11&fname=11OVERALLTHERMO.pdf',
+        'Ultrasonic Thickness Measurement': 'https://tslapps.tatasteel.co.in/GDCS/DownloadScanDoc.aspx?DocId=IMS%2fM%2fSS%2fCMM%2fMED%2fCBM%2fSOP%2f01&fname=01NDTSOPOFUTTHI.pdf',
+        'Rail UT': 'https://tslapps.tatasteel.co.in/GDCS/DownloadScanDoc.aspx?DocId=IMS%2fM%2fSS%2fCMM%2fMED%2fCBM%2fSOP%2f06&fname=06SOPOFRAILUTTE.pdf',
+        'Wire Rope NDT': 'https://tslapps.tatasteel.co.in/GDCS/DownloadScanDoc.aspx?DocId=IMS%2fM%2fSS%2fCMM%2fMED%2fCBM%2fSOP%2f08&fname=08NDTOFWIREROPE.pdf'
+    };
 
-        let notificationFilters = { department: '', status: '', dateFrom: '', dateTo: '' };
-        let dashboardFilters = { status: '', priority: '', department: '', jobType: '', dateRange: '' };
+    // 2. GLOBAL STATE
+    let currentUser = null, userRole = null, notifications = [], equipmentData = [], equipmentHierarchy = {}, currentPriority = 'medium', isSignUpMode = false;
+    let notificationFilters = { department: '', status: '', dateFrom: '', dateTo: '' };
+    let dashboardFilters = { status: '', priority: '', department: '', jobType: '', dateRange: '' };
 
-        // Helper: Get Local Time ISO string (Corrects 5.5h DB gap)
-        function getLocalISOString() {
-            const date = new Date();
-            const pad = (n) => n.toString().padStart(2, '0');
-            const yyyy = date.getFullYear();
-            const MM = pad(date.getMonth() + 1);
-            const dd = pad(date.getDate());
-            const hh = pad(date.getHours());
-            const mm = pad(date.getMinutes());
-            const ss = pad(date.getSeconds());
-            return `${yyyy}-${MM}-${dd}T${hh}:${mm}:${ss}`; 
-        }
+    // 3. UTILITIES
+    function getLocalISOString() {
+        const date = new Date();
+        const pad = (n) => n.toString().padStart(2, '0');
+        return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`; 
+    }
 
-        // ---------------------------------------------------------
-        // 2. AUTHENTICATION (Login & Sign Up)
-        // ---------------------------------------------------------
-        function toggleAuthMode() {
-            isSignUpMode = !isSignUpMode;
-            document.getElementById('auth-title').textContent = isSignUpMode ? 'Create Account' : 'Sign In';
-            document.getElementById('auth-btn').textContent = isSignUpMode ? 'Sign Up' : 'Sign In';
-            document.getElementById('auth-switch-text').textContent = isSignUpMode ? 'Already have an account?' : "Don't have an account?";
-            document.getElementById('auth-switch-btn').textContent = isSignUpMode ? 'Sign In' : 'Sign Up';
-        }
+    function showToast(msg, type='info') {
+        const c = document.getElementById('notification-container');
+        const d = document.createElement('div');
+        d.className = `p-4 rounded shadow-lg text-white mb-2 notification-enter ${type==='error'?'bg-red-500':type==='success'?'bg-green-600':'bg-blue-600'}`;
+        d.textContent = msg; c.appendChild(d); 
+        setTimeout(() => { d.classList.add('notification-exit'); setTimeout(()=>d.remove(), 300); }, 3000);
+    }
 
-        async function handleAuth(event) {
-            event.preventDefault();
-            const email = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value;
-            if (isSignUpMode) {
-                await handleSignUp(email, password);
-            } else {
-                await handleSignIn(email, password);
-            }
-        }
+    // 4. AUTHENTICATION
+    function toggleAuthMode() {
+        isSignUpMode = !isSignUpMode;
+        document.getElementById('auth-title').textContent = isSignUpMode ? 'Create Account' : 'Sign In';
+        document.getElementById('auth-btn').textContent = isSignUpMode ? 'Sign Up' : 'Sign In';
+        document.getElementById('auth-switch-text').textContent = isSignUpMode ? 'Already have an account?' : "Don't have an account?";
+        document.getElementById('auth-switch-btn').textContent = isSignUpMode ? 'Sign In' : 'Sign Up';
+    }
 
-        async function handleSignUp(email, password) {
-            showToast('Creating account...', 'info');
-            try {
-                // SQL Trigger on Supabase handles profile creation
-                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-                    email: email,
-                    password: password
-                });
+    async function handleAuth(event) {
+        event.preventDefault();
+        const email = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        if (isSignUpMode) await handleSignUp(email, password); else await handleSignIn(email, password);
+    }
 
-                if (authError) throw authError;
+    async function handleSignUp(email, password) {
+        showToast('Creating account...', 'info');
+        try {
+            const { data, error } = await supabaseClient.auth.signUp({ email, password });
+            if (error) throw error;
+            if (data.user && !data.session) { showToast('✅ Check email to verify!', 'success'); toggleAuthMode(); return; }
+            if (data.session) { showToast('✅ Account created!', 'success'); await handleSignIn(email, password); }
+        } catch (error) { showToast('Signup failed: ' + error.message, 'error'); }
+    }
 
-                if (authData.user && !authData.session) {
-                    showToast('✅ Registration successful! Please check your email.', 'success');
-                    toggleAuthMode();
-                    return;
-                }
-
-                if (authData.session) {
-                    showToast('✅ Account created! Logging you in...', 'success');
-                    await handleSignIn(email, password);
-                }
-            } catch (error) {
-                console.error('Signup error:', error);
-                showToast('Signup failed: ' + error.message, 'error');
-            }
-        }
-
-        async function handleSignIn(email, password) {
-            showToast('Signing in...', 'info');
-            try {
-                const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
-                    email: email,
-                    password: password
-                });
-                if (authError) throw authError;
-
-                // Fetch Role
-                const { data: profileData, error: profileError } = await supabaseClient
-                    .from('profiles')
-                    .select('role')
-                    .eq('id', authData.user.id)
-                    .single();
-
-                if (profileError) {
-                    console.warn('Role not found, defaulting to user');
-                    userRole = 'user';
-                } else {
-                    userRole = profileData.role;
-                }
-
-                currentUser = authData.user.email;
-                localStorage.setItem('currentUser', currentUser);
-                localStorage.setItem('userRole', userRole);
-
-                showToast(`Welcome ${currentUser}!`, 'success');
-                initializeApp();
-
-            } catch (error) {
-                console.error('Login error:', error);
-                showToast('Login failed: ' + error.message, 'error');
-            }
-        }
-
-        async function logout() {
-            const confirmMessage = document.createElement('div');
-            confirmMessage.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-            confirmMessage.innerHTML = `
-                <div class="bg-white rounded-xl p-6 max-w-sm mx-4">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Confirm Logout</h3>
-                    <p class="text-gray-600 mb-4">Are you sure you want to logout?</p>
-                    <div class="flex gap-3">
-                        <button onclick="performLogout()" class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Yes, Logout</button>
-                        <button onclick="this.closest('.fixed').remove()" class="flex-1 px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400">Cancel</button>
-                    </div>
-                </div>`;
-            document.body.appendChild(confirmMessage);
-        }
-
-        async function performLogout() {
-            await supabaseClient.auth.signOut();
-            currentUser = null;
-            userRole = null;
-            localStorage.removeItem('currentUser');
-            localStorage.removeItem('userRole');
-            document.getElementById('main-content').classList.add('hidden');
-            document.getElementById('main-sidebar').classList.add('hidden');
-            document.getElementById('login-page').classList.add('active');
-            const confirmDialog = document.querySelector('.fixed.inset-0');
-            if (confirmDialog) confirmDialog.remove();
-            showToast('Logged out successfully', 'info');
-        }
-
-        // ---------------------------------------------------------
-        // 3. INITIALIZATION & UI
-        // ---------------------------------------------------------
-        async function initializeApp() {
-            document.getElementById('login-page').classList.remove('active');
-            document.getElementById('main-content').classList.remove('hidden');
-            document.getElementById('main-sidebar').classList.remove('hidden');
-            document.getElementById('save-indicator-container').classList.remove('hidden');
-            document.getElementById('mobile-menu-btn').classList.remove('hidden');
+    async function handleSignIn(email, password) {
+        showToast('Signing in...', 'info');
+        try {
+            const { data: authData, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) throw error;
+            // Fetch Role from profiles
+            const { data: profile } = await supabaseClient.from('profiles').select('role').eq('id', authData.user.id).single();
+            userRole = profile ? profile.role : 'user';
             
-            configureUIForRole();
-            await initializeForm(); 
-            await loadNotificationsFromSupabase();
-            updateDashboardMetrics();
-            updateCharts();
-        }
+            currentUser = authData.user.email;
+            localStorage.setItem('currentUser', currentUser);
+            localStorage.setItem('userRole', userRole);
+            showToast(`Welcome ${currentUser}!`, 'success');
+            initializeApp();
+        } catch (error) { showToast('Login failed: ' + error.message, 'error'); }
+    }
 
-        function configureUIForRole() {
-            document.getElementById('user-display-name').textContent = currentUser;
-            document.getElementById('user-display-role').textContent = userRole === 'admin' ? 'Administrator' : 'User';
-            
-            if (userRole === 'user') {
-                document.getElementById('user-id-input').value = currentUser;
-                document.getElementById('user-id-input').readOnly = true;
-                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'none');
-                const notifFiltersContainer = document.getElementById('notifications-filters-container');
-                if (notifFiltersContainer) notifFiltersContainer.classList.add('hidden');
-            } else {
-                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
-                const notifFiltersContainer = document.getElementById('notifications-filters-container');
-                if (notifFiltersContainer) notifFiltersContainer.classList.remove('hidden');
-            }
-        }
+    async function logout() {
+        await supabaseClient.auth.signOut();
+        currentUser = null; userRole = null; localStorage.clear();
+        document.getElementById('main-content').classList.add('hidden');
+        document.getElementById('main-sidebar').classList.add('hidden');
+        document.getElementById('login-page').classList.add('active');
+        showToast('Logged out', 'info');
+    }
 
-        // ---------------------------------------------------------
-        // 4. DATA MANAGEMENT (Supabase)
-        // ---------------------------------------------------------
-        async function loadNotificationsFromSupabase() {
-            try {
-                showToast('Loading job requests...', 'info');
-                const { data, error } = await supabaseClient
-                    .from('job_requests')
-                    .select('*')
-                    .order('created_at', { ascending: false });
+    // 5. INITIALIZATION
+    async function initializeApp() {
+        document.getElementById('login-page').classList.remove('active');
+        document.getElementById('main-content').classList.remove('hidden');
+        document.getElementById('main-sidebar').classList.remove('hidden');
+        document.getElementById('save-indicator-container').classList.remove('hidden');
+        document.getElementById('mobile-menu-btn').classList.remove('hidden');
+        configureUIForRole();
+        await initializeForm(); 
+        await loadNotificationsFromSupabase();
+    }
 
-                if (error) throw error;
-
-                notifications = data.map(row => ({
-                    id: row.id,
-                    dbId: row.id,
-                    localId: row.local_id,
-                    date: row.date,
-                    userId: row.user_id,
-                    department: row.department,
-                    section: row.section,
-                    component: row.component,
-                    componentSection: row.component_section,
-                    equipmentName: row.equipment_name,
-                    sapId: row.sap_id,
-                    category: row.category,
-                    jobType: row.job_type,
-                    technique: row.technique,
-                    expectedFinishDate: row.expected_finish_date,
-                    status: row.status,
-                    priority: row.priority,
-                    description: row.description,
-                    createdAt: row.created_at,
-                    lastUpdated: row.last_updated,
-                    plannedDate: row.planned_date,
-                    completedDate: row.completed_date,
-                    rejectedDate: row.rejected_date
-                }));
-
-                updateDashboardMetrics();
-                if (document.getElementById('notifications-page').classList.contains('active')) {
-                    populateNotificationFilterDepartments();
-                    loadNotificationsPage();
-                } else if (document.getElementById('dashboard-page').classList.contains('active')) {
-                    populateFilterDepartments();
-                    updateCharts();
-                }
-
-            } catch (error) {
-                console.error('Error loading notifications:', error);
-                showToast('Error loading data: ' + error.message, 'error');
-            }
-        }
-
-        async function createNotification() {
-            const formData = collectFormData();
-            if (!validateForm(formData)) return;
-
-            const dbPayload = {
-                date: formData.date,
-                user_id: userRole === 'user' ? currentUser : formData.userId,
-                department: formData.department,
-                section: formData.section,
-                component: formData.component,
-                component_section: formData.componentSection,
-                equipment_name: formData.equipmentName,
-                sap_id: (formData.sapId === 'N/A' || !formData.sapId) ? null : parseFloat(formData.sapId),
-                category: formData.category,
-                job_type: formData.jobType,
-                technique: formData.technique,
-                expected_finish_date: formData.expectedFinishDate,
-                status: formData.notificationStatus,
-                priority: currentPriority,
-                description: formData.description,
-                local_id: Date.now(),
-                created_at: getLocalISOString() // Local Time
-            };
-
-            showToast('Saving job request...', 'info');
-            document.getElementById('create-btn').disabled = true;
-
-            try {
-                const { error } = await supabaseClient.from('job_requests').insert([dbPayload]);
-                if (error) throw error;
-                
-                showToast('✅ Job request saved to database!', 'success');
-                clearForm();
-                await loadNotificationsFromSupabase();
-                
-            } catch (error) {
-                console.error('Error creating notification:', error);
-                showToast('❌ Failed to save: ' + error.message, 'error');
-            } finally {
-                document.getElementById('create-btn').disabled = false;
-            }
-        }
-
-        async function updateJobStatus(notificationId) {
-            const newStatus = document.getElementById(`status-update-${notificationId}`).value;
-            const statusDate = document.getElementById(`status-date-${notificationId}`).value;
-            const comment = document.getElementById(`status-comment-${notificationId}`).value.trim();
-            
-            const notification = notifications.find(n => n.id === notificationId);
-            if (!notification) return showToast('Error: Notification not found', 'error');
-            if (!comment) return showToast('Description is required for updates', 'error');
-            if (notification.status !== newStatus && !statusDate) return showToast('Please select a date/time', 'error');
-
-            const updateTimestamp = statusDate ? new Date(statusDate).toISOString() : new Date().toISOString();
-            const localTime = new Date().toLocaleString('en-IN'); 
-            const dbTimestamp = getLocalISOString(); // Local time for DB
-            
-            const updates = {
-                status: newStatus,
-                last_updated: dbTimestamp
-            };
-
-            if (newStatus === 'Planned') updates.planned_date = dbTimestamp;
-            if (newStatus === 'Completed') updates.completed_date = dbTimestamp;
-            if (newStatus === 'Rejected') updates.rejected_date = dbTimestamp;
-            
-            const newDescription = `${notification.description}\n\n[${localTime} ${newStatus}]: ${comment}`;
-            updates.description = newDescription;
-
-            try {
-                const { error } = await supabaseClient.from('job_requests').update(updates).eq('id', notificationId);
-                if (error) throw error;
-                
-                showToast(`Status updated to ${newStatus}`, 'success');
-                await loadNotificationsFromSupabase();
-
-            } catch (error) {
-                console.error('Update error:', error);
-                showToast('Failed to update status: ' + error.message, 'error');
-            }
-        }
-
-        // ---------------------------------------------------------
-        // 5. EQUIPMENT DATA & DROPDOWNS
-        // ---------------------------------------------------------
-        async function loadEquipmentData() {
-            try {
-                const { data, error } = await supabaseClient.from('equipment_master').select('*');
-                if (error) throw error;
-                equipmentData = data || [];
-                buildEquipmentHierarchy();
-            } catch (error) {
-                console.error('Error loading equipment data:', error);
-                showToast('Error loading equipment data', 'error');
-            }
-        }
-
-        async function updateEquipmentSapId(equipmentName, newSapId) {
-            try {
-                const { error } = await supabaseClient
-                    .from('equipment_master')
-                    .update({ sap_id: newSapId })
-                    .eq('equipment_name', equipmentName);
-                if (error) throw error;
-                
-                const localEq = equipmentData.find(eq => eq.equipment_name === equipmentName);
-                if (localEq) localEq.sap_id = newSapId;
-                return true;
-            } catch (error) {
-                showToast('Error updating SAP ID', 'error');
-                return false;
-            }
-        }
-
-        function buildEquipmentHierarchy() {
-            equipmentHierarchy = {};
-            equipmentData.forEach(item => {
-                const { department: dept, section, component, component_section: compSec, equipment_name: eqName } = item;
-                if (!equipmentHierarchy[dept]) equipmentHierarchy[dept] = {};
-                if (!equipmentHierarchy[dept][section]) equipmentHierarchy[dept][section] = {};
-                if (!equipmentHierarchy[dept][section][component]) equipmentHierarchy[dept][section][component] = {};
-                if (!equipmentHierarchy[dept][section][component][compSec]) equipmentHierarchy[dept][section][component][compSec] = [];
-                if (!equipmentHierarchy[dept][section][component][compSec].includes(eqName)) {
-                    equipmentHierarchy[dept][section][component][compSec].push(eqName);
-                }
-            });
-            populateDepartments();
-        }
-
-        function populateDepartments() {
-            const select = document.getElementById('department-select');
-            if (!select) return;
-            select.innerHTML = '<option value="">Select Department</option>';
-            Object.keys(equipmentHierarchy).forEach(dept => {
-                const option = document.createElement('option');
-                option.value = dept;
-                option.textContent = dept;
-                select.appendChild(option);
-            });
-        }
-
-        async function initializeForm() {
-            document.getElementById('date-input').value = new Date().toISOString().split('T')[0];
-            await loadEquipmentData();
-            setupHierarchyHandlers();
-        }
-
-        function setupHierarchyHandlers() {
-             // 1. Department Change
-             document.getElementById('department-select').addEventListener('change', function() {
-                const s = document.getElementById('section-select'); 
-                resetDropdown(s, 'Select Section');
-                resetDropdown(document.getElementById('component-select'), 'Select Component');
-                resetDropdown(document.getElementById('component-section-select'), 'Select Component Section');
-                resetDropdown(document.getElementById('equipment-select'), 'Select Equipment');
-                
-                if (this.value && equipmentHierarchy[this.value]) {
-                    s.disabled = false;
-                    Object.keys(equipmentHierarchy[this.value]).forEach(k => {
-                        const opt = document.createElement('option');
-                        opt.value = k; opt.textContent = k; s.appendChild(opt);
-                    });
-                    addOthersOption(s);
-                }
-            });
-            
-             // 2. Section Change
-             document.getElementById('section-select').addEventListener('change', function() {
-                const d = document.getElementById('department-select').value;
-                const c = document.getElementById('component-select'); 
-                resetDropdown(c, 'Select Component');
-                hideCustomInputsExcept('section');
-                
-                const customInput = document.getElementById('section-custom-input');
-                if (this.value === 'Others') {
-                    customInput.classList.remove('hidden');
-                    c.disabled = false;
-                    addOthersOption(c);
-                } else {
-                    customInput.classList.add('hidden');
-                    if (this.value && equipmentHierarchy[d][this.value]) {
-                        c.disabled = false;
-                        Object.keys(equipmentHierarchy[d][this.value]).forEach(k => {
-                            const opt = document.createElement('option');
-                            opt.value = k; opt.textContent = k; c.appendChild(opt);
-                        });
-                        addOthersOption(c);
-                    }
-                }
-            });
-
-             // 3. Component Change
-             document.getElementById('component-select').addEventListener('change', function() {
-                 const d = document.getElementById('department-select').value;
-                 const s = document.getElementById('section-select').value;
-                 const cs = document.getElementById('component-section-select'); 
-                 resetDropdown(cs, 'Select Component Section');
-                 hideCustomInputsExcept('component');
-                 
-                 const customInput = document.getElementById('component-custom-input');
-                 if (this.value === 'Others') {
-                     customInput.classList.remove('hidden');
-                     cs.disabled = false;
-                     addOthersOption(cs);
-                 } else {
-                     customInput.classList.add('hidden');
-                     if (this.value && s !== 'Others' && equipmentHierarchy[d][s][this.value]) {
-                         cs.disabled = false;
-                         Object.keys(equipmentHierarchy[d][s][this.value]).forEach(k => {
-                             const opt = document.createElement('option');
-                             opt.value = k; opt.textContent = k; cs.appendChild(opt);
-                         });
-                         addOthersOption(cs);
-                     }
-                 }
-             });
-             
-             // 4. Component Section Change
-             document.getElementById('component-section-select').addEventListener('change', function() {
-                 const d = document.getElementById('department-select').value;
-                 const s = document.getElementById('section-select').value;
-                 const c = document.getElementById('component-select').value;
-                 const e = document.getElementById('equipment-select'); 
-                 resetDropdown(e, 'Select Equipment');
-                 hideCustomInputsExcept('component-section');
-                 
-                 const customInput = document.getElementById('component-section-custom-input');
-                 if (this.value === 'Others') {
-                     customInput.classList.remove('hidden');
-                     e.disabled = false;
-                     addOthersOption(e);
-                 } else {
-                     customInput.classList.add('hidden');
-                     if (this.value && c !== 'Others' && s !== 'Others' && equipmentHierarchy[d][s][c][this.value]) {
-                         e.disabled = false;
-                         equipmentHierarchy[d][s][c][this.value].forEach(k => {
-                             const opt = document.createElement('option');
-                             opt.value = k; opt.textContent = k; e.appendChild(opt);
-                         });
-                         addOthersOption(e);
-                     }
-                 }
-             });
-
-            // 5. Equipment Change
-            document.getElementById('equipment-select').addEventListener('change', function() {
-                 const custom = document.getElementById('equipment-custom-input');
-                 if (this.value === 'Others') {
-                     custom.classList.remove('hidden');
-                     document.getElementById('sap-id-input').value = '';
-                     document.getElementById('sap-id-input').readOnly = false;
-                     document.getElementById('category-select').value = '';
-                     document.getElementById('manual-sap-container').classList.add('hidden');
-                 } else {
-                     custom.classList.add('hidden');
-                     if (this.value) {
-                         const eq = equipmentData.find(x => x.equipment_name === this.value);
-                         document.getElementById('category-select').value = eq?.category || '';
-                         if (!eq?.sap_id || eq.sap_id === 'N/A') {
-                             document.getElementById('sap-id-input').value = 'N/A - Missing';
-                             document.getElementById('manual-sap-container').classList.remove('hidden');
-                         } else {
-                             document.getElementById('sap-id-input').value = eq.sap_id;
-                             document.getElementById('manual-sap-container').classList.add('hidden');
-                         }
-                     }
-                 }
-            });
-            
-            document.getElementById('job-type-select').addEventListener('change', function() {
-                const map = { 'Breakdown': 'critical', 'Need Base': 'high', 'Shutdown': 'medium' };
-                if (map[this.value]) setPriority(map[this.value]);
-            });
-        }
-
-        function addOthersOption(select) {
-            const opt = document.createElement('option');
-            opt.value = 'Others';
-            opt.textContent = 'Others (Custom)';
-            select.appendChild(opt);
-        }
+    function configureUIForRole() {
+        document.getElementById('user-display-name').textContent = currentUser;
+        document.getElementById('user-display-role').textContent = userRole.toUpperCase();
         
-        function resetDropdown(el, placeholder) {
-            el.innerHTML = `<option value="">${placeholder}</option>`;
-            el.disabled = true;
-        }
+        // Hide Admin/Vendor tools from standard user
+        const adminTools = document.querySelectorAll('.admin-only');
+        adminTools.forEach(el => el.style.display = (userRole === 'admin') ? 'block' : 'none');
+        // Specific show logic for the link in Sidebar
+        const usersNav = document.getElementById('nav-users');
+        if(usersNav) usersNav.style.display = (userRole === 'admin') ? 'flex' : 'none';
         
-        function hideCustomInputsExcept(type) {
-            ['section', 'component', 'component-section', 'equipment'].forEach(t => {
-                const el = document.getElementById(`${t}-custom-input`);
-                const key = t === 'component-section' ? 'component-section' : t; // Handle ID mismatch
-                if (key !== type) { el.classList.add('hidden'); el.value = ''; }
-            });
-        }
+        // Hide Filters for User
+        const filters = document.getElementById('notifications-filters-container');
+        if (userRole === 'user') filters.classList.add('hidden'); else filters.classList.remove('hidden');
         
-        async function saveManualSapId() {
-            const val = document.getElementById('manual-sap-input').value;
-            const eq = document.getElementById('equipment-select').value;
-            if (val && eq && await updateEquipmentSapId(eq, val)) {
-                document.getElementById('sap-id-input').value = val;
-                document.getElementById('manual-sap-container').classList.add('hidden');
-                showToast('SAP ID Saved', 'success');
-            }
-        }
-        
-        function collectFormData() {
-            const getValue = (id) => {
-                const el = document.getElementById(`${id}-select`);
-                return el.value === 'Others' ? document.getElementById(`${id}-custom-input`).value : el.value;
-            };
-            return {
-                date: document.getElementById('date-input').value,
-                userId: document.getElementById('user-id-input').value,
-                department: document.getElementById('department-select').value,
-                section: getValue('section'),
-                component: getValue('component'),
-                componentSection: getValue('component-section'),
-                equipmentName: getValue('equipment'),
-                sapId: document.getElementById('sap-id-input').value,
-                category: document.getElementById('category-select').value,
-                jobType: document.getElementById('job-type-select').value,
-                technique: document.getElementById('technique-select').value,
-                expectedFinishDate: document.getElementById('expected-finish-date-input').value,
-                notificationStatus: document.getElementById('status-select').value,
-                description: document.getElementById('description-input').value
-            };
-        }
+        // Hide Create button for Vendor (Optional, but usually vendors don't create tickets)
+        const createNav = document.getElementById('nav-create');
+        if (userRole === 'vendor') createNav.style.display = 'none'; else createNav.style.display = 'flex';
+    }
 
-        function validateForm(data) {
-            const required = ['date', 'department', 'section', 'component', 'equipmentName', 'jobType', 'description'];
-            if (required.some(f => !data[f])) {
-                showToast('Missing required fields', 'error');
-                return false;
-            }
-            return true;
-        }
-
-        function clearForm() {
-            document.getElementById('department-select').value = '';
-            document.getElementById('description-input').value = '';
-            resetDropdown(document.getElementById('section-select'), 'Select Section');
-            resetDropdown(document.getElementById('component-select'), 'Select Component');
-            resetDropdown(document.getElementById('component-section-select'), 'Select Component Section');
-            resetDropdown(document.getElementById('equipment-select'), 'Select Equipment');
-            
-            document.getElementById('sap-id-input').value = '';
-            document.getElementById('manual-sap-container').classList.add('hidden');
-            
-            hideCustomInputsExcept('none');
-            setPriority('medium');
-        }
-
-        function setPriority(p) {
-            currentPriority = p;
-            document.querySelectorAll('.priority-btn').forEach(b => b.classList.remove('ring-2', 'ring-offset-2', 'scale-105'));
-            const btn = document.getElementById(`priority-${p}`);
-            if (btn) btn.classList.add('ring-2', 'ring-offset-2', 'scale-105');
-        }
-
-        // ---------------------------------------------------------
-        // 6. DASHBOARD, EXPORT & NAVIGATION
-        // ---------------------------------------------------------
-        function exportToExcel() {
-            if (!notifications.length) return showToast('No data', 'warning');
-            const data = notifications.map(n => ({
-                ID: n.dbId, Date: n.date, User: n.userId, Dept: n.department, Equipment: n.equipmentName, Status: n.status, Desc: n.description
+    // 6. DATA MANAGEMENT
+    async function loadNotificationsFromSupabase() {
+        try {
+            const { data, error } = await supabaseClient.from('job_requests').select('*').order('created_at', { ascending: false });
+            if (error) throw error;
+            notifications = data.map(row => ({
+                id: row.id, dbId: row.id, localId: row.local_id, date: row.date, userId: row.user_id, department: row.department,
+                section: row.section, component: row.component, componentSection: row.component_section, equipmentName: row.equipment_name,
+                sapId: row.sap_id, category: row.category, jobType: row.job_type, technique: row.technique, expectedFinishDate: row.expected_finish_date,
+                status: row.status, priority: row.priority, description: row.description, createdAt: row.created_at, lastUpdated: row.last_updated,
+                vendorAssigned: row.vendor_assigned || '', permitNumber: row.permit_number || '', sopUrl: row.sop_url || ''
             }));
-            const ws = XLSX.utils.json_to_sheet(data);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Job Requests");
-            XLSX.writeFile(wb, "WorkOrders.xlsx");
-        }
-
-        function updateDashboardMetrics() {
-            let active = userRole === 'user' ? notifications.filter(n => n.userId === currentUser) : notifications;
-            
-            // Apply dashboard filters
-            if (dashboardFilters.status) active = active.filter(n => n.status === dashboardFilters.status);
-            if (dashboardFilters.priority) active = active.filter(n => n.priority === dashboardFilters.priority);
-            if (dashboardFilters.department) active = active.filter(n => n.department === dashboardFilters.department);
-
-            document.getElementById('total-notifications').textContent = active.length;
-            document.getElementById('notification-badge').textContent = active.length;
-            
-            const counts = active.reduce((acc, n) => { acc[n.status] = (acc[n.status] || 0) + 1; return acc; }, {});
-            document.getElementById('open-notifications').textContent = counts['Open'] || 0;
-            document.getElementById('planned-notifications').textContent = counts['Planned'] || 0;
-            document.getElementById('completed-notifications').textContent = counts['Completed'] || 0;
-            document.getElementById('rejected-notifications').textContent = counts['Rejected'] || 0;
-            document.getElementById('critical-alerts').textContent = active.filter(n => n.priority === 'critical').length;
-            
-            const rate = active.length ? Math.round(((counts['Completed'] || 0) / active.length) * 100) : 0;
-            document.getElementById('completion-rate').textContent = rate + '%';
-
-            // KPI Math
-            const avgResponse = active.length > 0 ? Math.round(active.reduce((sum, n) => { 
-                const map = { critical: 2, high: 8, medium: 24, low: 48 }; 
-                return sum + (map[n.priority] || 24); 
-            }, 0) / active.length) : 0;
-            document.getElementById('avg-response-time').textContent = avgResponse + 'h';
-
-            const completedWithTime = active.filter(n => n.status === 'Completed' && n.lastUpdated);
-            let avgDays = 0;
-            if (completedWithTime.length > 0) {
-                const total = completedWithTime.reduce((sum, n) => {
-                    return sum + Math.ceil((new Date(n.lastUpdated) - new Date(n.createdAt)) / (1000 * 60 * 60 * 24));
-                }, 0);
-                avgDays = Math.round(total / completedWithTime.length);
+            populateFilterDepartments();
+            updateDashboardMetrics();
+            if (document.getElementById('notifications-page').classList.contains('active')) {
+                loadNotificationsPage();
+                populateNotificationFilterDepartments(); // Ensure this is also populated if on that page
             }
-            document.getElementById('avg-completion-days').textContent = avgDays;
-
-            updateDepartmentStats(active);
-            updateTechniqueStats(active);
-            updateRecentActivity(active);
-            updateCharts(active);
+            
+        } catch (error) { 
+            console.error(error); // Helpful to see the error in console
+            showToast('Error loading data', 'error'); 
         }
+    }
+
+    async function createNotification() {
+        const formData = collectFormData();
+        if (!validateForm(formData)) return;
         
-        function updateDepartmentStats(data) {
-            const div = document.getElementById('department-stats'); div.innerHTML = '';
-            const stats = {};
-            data.forEach(n => {
-                if (!stats[n.department]) stats[n.department] = { total: 0, completed: 0 };
-                stats[n.department].total++;
-                if (n.status === 'Completed') stats[n.department].completed++;
-            });
+        const dbPayload = {
+            date: formData.date, user_id: userRole === 'user' ? currentUser : formData.userId, department: formData.department,
+            section: formData.section, component: formData.component, component_section: formData.componentSection, equipment_name: formData.equipmentName,
+            sap_id: (formData.sapId === 'N/A' || !formData.sapId) ? null : parseFloat(formData.sapId), category: formData.category,
+            job_type: formData.jobType, technique: formData.technique, expected_finish_date: formData.expectedFinishDate, status: formData.notificationStatus,
+            priority: currentPriority, description: formData.description, local_id: Date.now(), 
+            created_at: getLocalISOString() 
+        };
 
-            Object.entries(stats).sort(([, a], [, b]) => b.total - a.total).slice(0, 5).forEach(([dept, d]) => {
-                const pct = Math.round((d.completed / d.total) * 100) || 0;
-                div.innerHTML += `
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div><div class="font-medium text-gray-800">${dept}</div><div class="text-sm text-gray-600">${d.total} requests</div></div>
-                    <div class="text-right"><div class="font-semibold text-indigo-600">${pct}%</div><div class="text-xs text-gray-500">completion</div></div>
-                </div>`;
-            });
+        try {
+            const { error } = await supabaseClient.from('job_requests').insert([dbPayload]);
+            if (error) throw error;
+            showToast('✅ Job request saved!', 'success');
+            clearForm();
+            await loadNotificationsFromSupabase();
+        } catch (error) { showToast('❌ Failed to save: ' + error.message, 'error'); }
+    }
+
+    async function updateJobStatus(id) {
+        const notification = notifications.find(n => n.id === id);
+        if (!notification) return;
+
+        // --- ADMIN UPDATE LOGIC ---
+        if (userRole === 'admin') {
+            const newStatus = document.getElementById(`status-update-${id}`).value;
+            const comment = document.getElementById(`status-comment-${id}`).value.trim();
+            const newVendor = document.getElementById(`vendor-update-${id}`).value;
+            const sopUrl = document.getElementById(`sop-update-${id}`).value;
+            const permit = document.getElementById(`permit-update-${id}`).value;
+
+            if (!comment) return showToast('Description required', 'error');
+
+            const localTime = new Date().toLocaleString('en-IN'); 
+            const dbTimestamp = getLocalISOString();
+            
+            const newDesc = `${notification.description}\n\n[${localTime} ${newStatus}]: ${comment}`;
+            const updates = { 
+                status: newStatus, description: newDesc, last_updated: dbTimestamp,
+                vendor_assigned: newVendor, sop_url: sopUrl, permit_number: permit
+            };
+
+            if(newStatus === 'Planned') updates.planned_date = dbTimestamp;
+            if(newStatus === 'Completed') updates.completed_date = dbTimestamp;
+            if(newStatus === 'Rejected') updates.rejected_date = dbTimestamp;
+
+            try {
+                const { error } = await supabaseClient.from('job_requests').update(updates).eq('id', id);
+                if (error) throw error;
+                showToast(`Job updated!`, 'success');
+                await loadNotificationsFromSupabase();
+            } catch (error) { showToast('Update failed', 'error'); }
+        } 
+        // --- VENDOR UPDATE LOGIC ---
+        else if (userRole === 'vendor') {
+            const permit = document.getElementById(`permit-update-${id}`).value;
+            if (!permit) return showToast('Permit number required', 'error');
+
+            try {
+                const { error } = await supabaseClient.from('job_requests').update({ permit_number: permit }).eq('id', id);
+                if (error) throw error;
+                showToast(`Permit Saved!`, 'success');
+                await loadNotificationsFromSupabase();
+            } catch (error) { showToast('Update failed', 'error'); }
         }
+    }
+
+    // --- NEW: USER MANAGEMENT LOGIC ---
+    async function loadUsersList() {
+        const tableBody = document.getElementById('users-table-body');
+        tableBody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">Loading users...</td></tr>';
         
-        function updateTechniqueStats(data) {
-            const div = document.getElementById('technique-stats'); div.innerHTML = '';
-            const stats = data.reduce((acc, n) => { if(n.technique) acc[n.technique]=(acc[n.technique]||0)+1; return acc; }, {});
-            Object.entries(stats).sort(([,a],[,b])=>b-a).slice(0,5).forEach(([k,v]) => {
-                const pct = Math.round((v/data.length)*100);
-                div.innerHTML += `
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                    <div class="font-medium text-gray-800">${k}</div>
-                    <div class="text-right"><div class="font-semibold text-green-600">${pct}%</div><div class="text-xs text-gray-500">of total</div></div>
-                </div>`;
-            });
-        }
-
-        function updateRecentActivity(data) {
-            const div = document.getElementById('recent-activity'); div.innerHTML = '';
-            const sorted = [...data].sort((a,b)=>new Date(b.lastUpdated || b.createdAt) - new Date(a.lastUpdated || a.createdAt)).slice(0,5);
-            if(sorted.length===0) { div.innerHTML = '<div class="text-center text-gray-400 py-4">No recent activity</div>'; return; }
+        try {
+            // Fetch all profiles
+            const { data, error } = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
+            if (error) throw error;
             
-            sorted.forEach(n => {
-                div.innerHTML += `
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg border-l-4 border-indigo-400">
-                    <div>
-                        <div class="font-medium text-gray-800">${n.department} - ${n.equipmentName}</div>
-                        <div class="text-xs text-gray-500">${n.status} • ${new Date(n.lastUpdated || n.createdAt).toLocaleDateString()}</div>
-                    </div>
-                    <div class="text-xs font-bold text-gray-400">#${n.dbId}</div>
-                </div>`;
-            });
-        }
-
-        let priorityChart, statusChart;
-        function updateCharts(active) {
-            if (!document.getElementById('priorityChart')) return;
-            const ctxP = document.getElementById('priorityChart');
-            const ctxS = document.getElementById('statusChart');
+            tableBody.innerHTML = '';
             
-            const pData = [
-                active.filter(n => n.priority === 'low').length,
-                active.filter(n => n.priority === 'medium').length,
-                active.filter(n => n.priority === 'high').length,
-                active.filter(n => n.priority === 'critical').length
-            ];
-            const sData = [
-                active.filter(n => n.status === 'Open').length,
-                active.filter(n => n.status === 'Planned').length,
-                active.filter(n => n.status === 'Completed').length,
-                active.filter(n => n.status === 'Rejected').length
-            ];
-
-            if (priorityChart) priorityChart.destroy();
-            priorityChart = new Chart(ctxP, {
-                type: 'doughnut',
-                data: { labels: ['Low', 'Medium', 'High', 'Critical'], datasets: [{ data: pData, backgroundColor: ['#10B981', '#F59E0B', '#F97316', '#EF4444'] }] },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-
-            if (statusChart) statusChart.destroy();
-            statusChart = new Chart(ctxS, {
-                type: 'bar',
-                data: { labels: ['Open', 'Planned', 'Completed', 'Rejected'], datasets: [{ label:'Requests', data: sData, backgroundColor: ['#3B82F6', '#8B5CF6', '#10B981', '#EF4444'] }] },
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-        }
-
-        function loadNotificationsPage() {
-            const container = document.getElementById('notifications-list');
-            container.innerHTML = '';
-            let display = userRole === 'user' ? notifications.filter(n => n.userId === currentUser) : notifications;
-            
-            if (notificationFilters.department) display = display.filter(n => n.department === notificationFilters.department);
-            if (notificationFilters.status) display = display.filter(n => n.status === notificationFilters.status);
-
-            if (!display.length) {
-                container.innerHTML = '<div class="text-center text-gray-500 py-8">No requests found</div>';
+            if (data.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-gray-500">No users found.</td></tr>';
                 return;
             }
 
-            display.forEach(n => {
-                const color = { 'Open': 'bg-blue-100 text-blue-800', 'Planned': 'bg-purple-100 text-purple-800', 'Completed': 'bg-green-100 text-green-800', 'Rejected': 'bg-red-100 text-red-800' }[n.status] || 'bg-gray-100';
-                
-                let adminControls = '';
-                if (userRole === 'admin') {
-                    adminControls = `
-                    <div class="border-t pt-4 mt-4 bg-gray-50 p-3 rounded">
-                        <h4 class="text-xs font-bold uppercase text-gray-500 mb-2">Admin Controls</h4>
-                        <div class="flex flex-wrap gap-2">
-                            <select id="status-update-${n.id}" class="border rounded px-2 py-1 text-sm"><option value="Open">Open</option><option value="Planned">Planned</option><option value="Completed">Completed</option><option value="Rejected">Rejected</option></select>
-                            <input type="datetime-local" id="status-date-${n.id}" class="border rounded px-2 py-1 text-sm">
-                            <input type="text" id="status-comment-${n.id}" placeholder="Comment required" class="border rounded px-2 py-1 text-sm flex-grow">
-                            <button onclick="updateJobStatus(${n.id})" class="bg-indigo-600 text-white px-3 py-1 rounded text-sm hover:bg-indigo-700">Update</button>
-                        </div>
-                    </div>`;
-                }
-
-                container.innerHTML += `
-                <div class="bg-white rounded-xl shadow p-6 border border-gray-100">
-                    <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <h3 class="font-bold text-gray-800">${n.department} - ${n.equipmentName}</h3>
-                            <div class="text-xs text-gray-500">ID: ${n.dbId} • ${n.date} • ${n.userId}</div>
-                        </div>
-                        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase ${color}">${n.status}</span>
-                    </div>
-                    <div class="text-sm text-gray-700 bg-gray-50 p-3 rounded mb-3 whitespace-pre-line">${n.description}</div>
-                    <div class="flex gap-4 text-xs text-gray-500 mb-2">
-                        <span>Technique: <strong>${n.technique}</strong></span>
-                        <span>Priority: <strong class="uppercase">${n.priority}</strong></span>
-                    </div>
-                    ${adminControls}
-                </div>`;
+            data.forEach(user => {
+                const isMe = user.email === currentUser;
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-medium text-gray-900">${user.email}</div>
+                        ${isMe ? '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">You</span>' : ''}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${new Date(user.created_at).toLocaleDateString()}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                        ${user.role==='admin'?'bg-purple-100 text-purple-800':user.role==='vendor'?'bg-yellow-100 text-yellow-800':'bg-gray-100 text-gray-800'}">
+                        ${user.role.toUpperCase()}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        ${!isMe ? `
+                        <select onchange="updateUserRole('${user.id}', this.value)" class="text-sm border-gray-300 rounded-md shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                            <option value="user" ${user.role==='user'?'selected':''}>User</option>
+                            <option value="vendor" ${user.role==='vendor'?'selected':''}>Vendor</option>
+                            <option value="admin" ${user.role==='admin'?'selected':''}>Admin</option>
+                        </select>
+                        ` : '<span class="text-gray-400">Locked</span>'}
+                    </td>
+                `;
+                tableBody.appendChild(row);
             });
+        } catch (error) {
+            console.error(error);
+            tableBody.innerHTML = `<tr><td colspan="4" class="px-6 py-4 text-center text-red-500">Error loading users: ${error.message}</td></tr>`;
+        }
+    }
+
+    async function updateUserRole(userId, newRole) {
+        if (!confirm(`Are you sure you want to change this user's role to ${newRole.toUpperCase()}?`)) {
+            loadUsersList(); // Reset dropdown if cancelled
+            return;
         }
 
-        function showPage(pageId) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-            document.getElementById(`${pageId}-page`).classList.add('active');
-            document.getElementById(`nav-${pageId}`).classList.add('active');
-            closeMobileMenu();
-            
-            if (pageId === 'notifications') { populateNotificationFilterDepartments(); loadNotificationsPage(); }
-            if (pageId === 'dashboard') { populateFilterDepartments(); updateDashboardMetrics(); updateCharts(); }
+        try {
+            const { error } = await supabaseClient.from('profiles').update({ role: newRole }).eq('id', userId);
+            if (error) throw error;
+            showToast(`User role updated to ${newRole}`, 'success');
+            loadUsersList(); // Refresh list
+        } catch (error) {
+            showToast('Failed to update role: ' + error.message, 'error');
         }
+    }
+
+
+    // 7. DASHBOARD LOGIC
+    function updateDashboardMetrics() {
+    let active = userRole === 'user' ? notifications.filter(n => n.userId === currentUser) : notifications;
+
+    // 1. Status Filter
+    if (dashboardFilters.status) active = active.filter(n => n.status === dashboardFilters.status);
+    
+    // 2. Priority Filter
+    if (dashboardFilters.priority) active = active.filter(n => n.priority === dashboardFilters.priority);
+    
+    // 3. Department Filter
+    if (dashboardFilters.department) active = active.filter(n => n.department === dashboardFilters.department);
+
+    // 4. Job Type Filter (NEW)
+    if (dashboardFilters.jobType) active = active.filter(n => n.jobType === dashboardFilters.jobType);
+
+    // 5. Date Range Filter (NEW)
+    if (dashboardFilters.dateRange) {
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         
-        function populateNotificationFilterDepartments() { const s = document.getElementById('notif-filter-department'); const d = [...new Set(notifications.map(n => n.department))]; s.innerHTML = '<option value="">All Departments</option>' + d.map(x => `<option value="${x}">${x}</option>`).join(''); }
-        function applyNotificationsFilters() { notificationFilters.department = document.getElementById('notif-filter-department').value; notificationFilters.status = document.getElementById('notif-filter-status').value; loadNotificationsPage(); }
-        function populateFilterDepartments() { const s = document.getElementById('filter-department'); const d = [...new Set(notifications.map(n => n.department))]; s.innerHTML = '<option value="">All Departments</option>' + d.map(x => `<option value="${x}">${x}</option>`).join(''); }
-        function applyFilters() { dashboardFilters.status = document.getElementById('filter-status').value; dashboardFilters.priority = document.getElementById('filter-priority').value; dashboardFilters.department = document.getElementById('filter-department').value; updateDashboardMetrics(); updateCharts(); }
-        function clearFilters() { document.getElementById('filter-status').value = ''; document.getElementById('filter-priority').value = ''; document.getElementById('filter-department').value = ''; dashboardFilters = { status:'', priority:'', department:'' }; updateDashboardMetrics(); updateCharts(); }
-        function clearNotificationsFilters() { document.getElementById('notif-filter-department').value = ''; document.getElementById('notif-filter-status').value = ''; notificationFilters = { department: '', status: '', dateFrom: '', dateTo: '' }; loadNotificationsPage(); }
-
-        function toggleMobileMenu() { document.getElementById('main-sidebar').classList.toggle('mobile-open'); document.getElementById('mobile-overlay').classList.toggle('active'); }
-        function closeMobileMenu() { document.getElementById('main-sidebar').classList.remove('mobile-open'); document.getElementById('mobile-overlay').classList.remove('active'); }
-        
-        function showToast(msg, type='info') {
-            const c = document.getElementById('notification-container');
-            const d = document.createElement('div');
-            const color = type==='success'?'bg-green-600':type==='error'?'bg-red-600':'bg-blue-600';
-            d.className = `${color} text-white p-4 rounded shadow-lg mb-2 notification-enter`;
-            d.textContent = msg;
-            c.appendChild(d);
-            setTimeout(() => { d.classList.add('notification-exit'); setTimeout(()=>d.remove(), 300); }, 3000);
-        }
-
-        // Init
-        document.addEventListener('DOMContentLoaded', async function() {
-            const savedUser = localStorage.getItem('currentUser');
-            const savedRole = localStorage.getItem('userRole');
+        active = active.filter(n => {
+            const jobDate = new Date(n.date); // Uses the job creation date
             
-            if (savedUser) {
-                currentUser = savedUser;
-                userRole = savedRole;
-                const { data } = await supabaseClient.auth.getSession();
-                if (data.session) {
-                    initializeApp();
-                } else {
-                    console.log('Session expired');
+            if (dashboardFilters.dateRange === 'today') {
+                return jobDate >= todayStart;
+            }
+            if (dashboardFilters.dateRange === 'week') {
+                const weekAgo = new Date(now.setDate(now.getDate() - 7));
+                return jobDate >= weekAgo;
+            }
+            if (dashboardFilters.dateRange === 'month') {
+                const monthAgo = new Date(now.setMonth(now.getMonth() - 1));
+                return jobDate >= monthAgo;
+            }
+            if (dashboardFilters.dateRange === 'overdue') {
+                // Check if expected finish date is in the past AND status is NOT Completed
+                if (!n.expectedFinishDate) return false;
+                const finishDate = new Date(n.expectedFinishDate);
+                return finishDate < new Date() && n.status !== 'Completed' && n.status !== 'Rejected';
+            }
+            return true;
+        });
+    }
+
+    // --- METRIC CALCULATIONS (No changes needed below, just standardizing variables) ---
+    const counts = active.reduce((acc, n) => { acc[n.status] = (acc[n.status] || 0) + 1; return acc; }, {});
+    document.getElementById('total-notifications').textContent = active.length;
+    document.getElementById('notification-badge').textContent = active.length;
+    document.getElementById('open-notifications').textContent = counts['Open'] || 0;
+    document.getElementById('planned-notifications').textContent = counts['Planned'] || 0;
+    document.getElementById('completed-notifications').textContent = counts['Completed'] || 0;
+    document.getElementById('rejected-notifications').textContent = counts['Rejected'] || 0;
+    document.getElementById('critical-alerts').textContent = active.filter(n => n.priority === 'critical').length;
+    
+    const rate = active.length ? Math.round(((counts['Completed'] || 0) / active.length) * 100) : 0;
+    document.getElementById('completion-rate').textContent = rate + '%';
+
+    const avgResponse = active.length > 0 ? Math.round(active.reduce((sum, n) => { 
+        const map = { critical: 2, high: 8, medium: 24, low: 48 }; return sum + (map[n.priority] || 24); 
+    }, 0) / active.length) : 0;
+    document.getElementById('avg-response-time').textContent = avgResponse + 'h';
+
+    const completedWithTime = active.filter(n => n.status === 'Completed' && n.lastUpdated);
+    let avgDays = 0;
+    if (completedWithTime.length > 0) {
+        const total = completedWithTime.reduce((sum, n) => sum + Math.ceil((new Date(n.lastUpdated) - new Date(n.createdAt)) / 86400000), 0);
+        avgDays = Math.round(total / completedWithTime.length);
+    }
+    document.getElementById('avg-completion-days').textContent = avgDays;
+
+    updateDepartmentStats(active);
+    updateTechniqueStats(active);
+    updateRecentActivity(active);
+    updateCharts(active);
+}
+    
+    function updateDepartmentStats(data) {
+        const div = document.getElementById('department-stats'); div.innerHTML = '';
+        const stats = data.reduce((acc, n) => { 
+            if (!acc[n.department]) acc[n.department] = { total: 0, completed: 0 };
+            acc[n.department].total++;
+            if (n.status === 'Completed') acc[n.department].completed++;
+            return acc; 
+        }, {});
+        Object.entries(stats).sort(([,a],[,b])=>b.total-a.total).slice(0,5).forEach(([k,v]) => {
+            const pct = Math.round((v.completed/v.total)*100)||0;
+            div.innerHTML += `<div class="flex justify-between p-2 bg-gray-50 rounded"><span>${k}</span><div class="text-right"><span class="font-bold">${v.total}</span> <span class="text-xs text-gray-500">(${pct}%)</span></div></div>`;
+        });
+    }
+    
+    function updateTechniqueStats(data) {
+        const div = document.getElementById('technique-stats'); div.innerHTML = '';
+        const stats = data.reduce((acc, n) => { if(n.technique) acc[n.technique]=(acc[n.technique]||0)+1; return acc; }, {});
+        Object.entries(stats).sort(([,a],[,b])=>b-a).slice(0,5).forEach(([k,v]) => {
+            const pct = Math.round((v/data.length)*100);
+            div.innerHTML += `<div class="flex justify-between p-2 bg-gray-50 rounded"><span>${k}</span><span class="text-green-600 font-bold">${pct}%</span></div>`;
+        });
+    }
+
+    function updateRecentActivity(data) {
+        const div = document.getElementById('recent-activity'); div.innerHTML = '';
+        if(data.length===0) { div.innerHTML = '<div class="text-center text-gray-400 py-4">No recent activity</div>'; return; }
+        [...data].sort((a,b)=>new Date(b.lastUpdated || b.createdAt) - new Date(a.lastUpdated || a.createdAt)).slice(0,5).forEach(n => {
+            div.innerHTML += `<div class="p-2 border-b flex justify-between text-sm"><span>${n.department} - ${n.equipmentName}</span><span class="text-xs text-gray-500">${new Date(n.lastUpdated || n.createdAt).toLocaleDateString()}</span></div>`;
+        });
+    }
+
+    let priorityChart, statusChart;
+    function updateCharts(active) {
+        if (!document.getElementById('priorityChart')) return;
+        const pData = ['low','medium','high','critical'].map(p => active.filter(n=>n.priority===p).length);
+        const sData = ['Open','Planned','Completed','Rejected'].map(s => active.filter(n=>n.status===s).length);
+        
+        if(priorityChart) priorityChart.destroy();
+        priorityChart = new Chart(document.getElementById('priorityChart'), { type: 'doughnut', data: { labels: ['Low','Medium','High','Critical'], datasets: [{ data: pData, backgroundColor: ['#10B981','#F59E0B','#F97316','#EF4444'] }] } });
+        if(statusChart) statusChart.destroy();
+        statusChart = new Chart(document.getElementById('statusChart'), { type: 'bar', data: { labels: ['Open','Planned','Completed','Rejected'], datasets: [{ label:'Count', data: sData, backgroundColor: ['#3B82F6','#8B5CF6','#10B981','#EF4444'] }] } });
+    }
+
+    // 8. FORM & HIERARCHY LOGIC
+    async function loadEquipmentData() {
+        const { data } = await supabaseClient.from('equipment_master').select('*');
+        equipmentData = data || [];
+        buildEquipmentHierarchy();
+    }
+    
+    async function updateEquipmentSapId(equipmentName, newSapId) {
+        try {
+            const { error } = await supabaseClient.from('equipment_master').update({ sap_id: newSapId }).eq('equipment_name', equipmentName);
+            if (error) throw error;
+            const localEq = equipmentData.find(eq => eq.equipment_name === equipmentName);
+            if (localEq) localEq.sap_id = newSapId;
+            return true;
+        } catch (error) { return false; }
+    }
+
+    function buildEquipmentHierarchy() {
+        equipmentHierarchy = {};
+        equipmentData.forEach(item => {
+            const { department: d, section: s, component: c, component_section: cs, equipment_name: e } = item;
+            if(!equipmentHierarchy[d]) equipmentHierarchy[d]={};
+            if(!equipmentHierarchy[d][s]) equipmentHierarchy[d][s]={};
+            if(!equipmentHierarchy[d][s][c]) equipmentHierarchy[d][s][c]={};
+            if(!equipmentHierarchy[d][s][c][cs]) equipmentHierarchy[d][s][c][cs]=[];
+            if(!equipmentHierarchy[d][s][c][cs].includes(e)) equipmentHierarchy[d][s][c][cs].push(e);
+        });
+        const ds = document.getElementById('department-select'); ds.innerHTML='<option value="">Select Department</option>';
+        Object.keys(equipmentHierarchy).forEach(k=>ds.innerHTML+=`<option value="${k}">${k}</option>`);
+    }
+
+    async function initializeForm() {
+        document.getElementById('date-input').value = new Date().toISOString().split('T')[0];
+        await loadEquipmentData();
+        setupHierarchyHandlers();
+    }
+
+    function setupHierarchyHandlers() {
+        document.getElementById('department-select').addEventListener('change', function() {
+            const s = document.getElementById('section-select'); 
+            resetDropdown(s, 'Select Section');
+            resetDropdown(document.getElementById('component-select'), 'Select Component');
+            resetDropdown(document.getElementById('component-section-select'), 'Select Component Section');
+            resetDropdown(document.getElementById('equipment-select'), 'Select Equipment');
+            if(this.value && equipmentHierarchy[this.value]) {
+                s.disabled = false;
+                Object.keys(equipmentHierarchy[this.value]).forEach(k => {
+                    const opt = document.createElement('option'); opt.value = k; opt.textContent = k; s.appendChild(opt);
+                });
+                addOthersOption(s);
+            }
+        });
+        
+        document.getElementById('section-select').addEventListener('change', function() {
+            const d = document.getElementById('department-select').value;
+            const c = document.getElementById('component-select'); 
+            resetDropdown(c, 'Select Component');
+            hideCustomInputsExcept('section');
+            const customInput = document.getElementById('section-custom-input');
+            if (this.value === 'Others') {
+                customInput.classList.remove('hidden'); c.disabled = false; addOthersOption(c);
+            } else {
+                customInput.classList.add('hidden');
+                if (this.value && equipmentHierarchy[d][this.value]) {
+                    c.disabled = false;
+                    Object.keys(equipmentHierarchy[d][this.value]).forEach(k => {
+                        const opt = document.createElement('option'); opt.value = k; opt.textContent = k; c.appendChild(opt);
+                    });
+                    addOthersOption(c);
                 }
             }
         });
-    </script>
+
+        document.getElementById('component-select').addEventListener('change', function() {
+            const d = document.getElementById('department-select').value;
+            const s = document.getElementById('section-select').value;
+            const cs = document.getElementById('component-section-select'); 
+            resetDropdown(cs, 'Select Component Section');
+            hideCustomInputsExcept('component');
+            const customInput = document.getElementById('component-custom-input');
+            if (this.value === 'Others') {
+                customInput.classList.remove('hidden'); cs.disabled = false; addOthersOption(cs);
+            } else {
+                customInput.classList.add('hidden');
+                if (this.value && s !== 'Others' && equipmentHierarchy[d][s][this.value]) {
+                    cs.disabled = false;
+                    Object.keys(equipmentHierarchy[d][s][this.value]).forEach(k => {
+                        const opt = document.createElement('option'); opt.value = k; opt.textContent = k; cs.appendChild(opt);
+                    });
+                    addOthersOption(cs);
+                }
+            }
+        });
+        
+        document.getElementById('component-section-select').addEventListener('change', function() {
+            const d = document.getElementById('department-select').value;
+            const s = document.getElementById('section-select').value;
+            const c = document.getElementById('component-select').value;
+            const e = document.getElementById('equipment-select'); 
+            resetDropdown(e, 'Select Equipment');
+            hideCustomInputsExcept('component-section');
+            const customInput = document.getElementById('component-section-custom-input');
+            if (this.value === 'Others') {
+                customInput.classList.remove('hidden'); e.disabled = false; addOthersOption(e);
+            } else {
+                customInput.classList.add('hidden');
+                if (this.value && c !== 'Others' && s !== 'Others' && equipmentHierarchy[d][s][c][this.value]) {
+                    e.disabled = false;
+                    equipmentHierarchy[d][s][c][this.value].forEach(k => {
+                        const opt = document.createElement('option'); opt.value = k; opt.textContent = k; e.appendChild(opt);
+                    });
+                    addOthersOption(e);
+                }
+            }
+        });
+
+        document.getElementById('equipment-select').addEventListener('change', function() {
+            const custom = document.getElementById('equipment-custom-input');
+            if (this.value === 'Others') {
+                custom.classList.remove('hidden');
+                document.getElementById('sap-id-input').value = '';
+                document.getElementById('sap-id-input').readOnly = false;
+                document.getElementById('category-select').value = '';
+                document.getElementById('manual-sap-container').classList.add('hidden');
+            } else {
+                custom.classList.add('hidden');
+                if (this.value) {
+                    const eq = equipmentData.find(x => x.equipment_name === this.value);
+                    document.getElementById('category-select').value = eq?.category || '';
+                    if (!eq?.sap_id || eq.sap_id === 'N/A') {
+                        document.getElementById('sap-id-input').value = 'N/A - Missing';
+                        document.getElementById('manual-sap-container').classList.remove('hidden');
+                    } else {
+                        document.getElementById('sap-id-input').value = eq.sap_id;
+                        document.getElementById('manual-sap-container').classList.add('hidden');
+                    }
+                }
+            }
+        });
+
+        document.getElementById('job-type-select').addEventListener('change', function() {
+            const map = { 'Breakdown': 'critical', 'Need Base': 'high', 'Shutdown': 'medium' };
+            if (map[this.value]) setPriority(map[this.value]);
+        });
+    }
+
+    function addOthersOption(select) {
+        const opt = document.createElement('option');
+        opt.value = 'Others'; opt.textContent = 'Others (Custom)';
+        select.appendChild(opt);
+    }
+    
+    function resetDropdown(el, placeholder) {
+        el.innerHTML = `<option value="">${placeholder}</option>`; el.disabled = true;
+    }
+    
+    function hideCustomInputsExcept(type) {
+        ['section', 'component', 'component-section', 'equipment'].forEach(t => {
+            const el = document.getElementById(`${t}-custom-input`);
+            const key = t === 'component-section' ? 'component-section' : t;
+            if (key !== type) { el.classList.add('hidden'); el.value = ''; }
+        });
+    }
+    
+    async function saveManualSapId() {
+        const val = document.getElementById('manual-sap-input').value;
+        const eq = document.getElementById('equipment-select').value;
+        if (val && eq && await updateEquipmentSapId(eq, val)) {
+            document.getElementById('sap-id-input').value = val;
+            document.getElementById('manual-sap-container').classList.add('hidden');
+            showToast('SAP ID Saved', 'success');
+        }
+    }
+    
+    function collectFormData() {
+        const val = (id) => { const el=document.getElementById(id+'-select'); return el.value==='Others'?document.getElementById(id+'-custom-input').value:el.value; };
+        return {
+            date: document.getElementById('date-input').value, userId: document.getElementById('user-id-input').value,
+            department: document.getElementById('department-select').value, section: val('section'), component: val('component'),
+            componentSection: val('component-section'), equipmentName: val('equipment'), sapId: document.getElementById('sap-id-input').value,
+            category: document.getElementById('category-select').value, jobType: document.getElementById('job-type-select').value,
+            technique: document.getElementById('technique-select').value, expectedFinishDate: document.getElementById('expected-finish-date-input').value,
+            notificationStatus: document.getElementById('status-select').value, description: document.getElementById('description-input').value
+        };
+    }
+
+    function validateForm(data) {
+        const required = ['date', 'department', 'section', 'component', 'equipmentName', 'jobType', 'description'];
+        if (required.some(f => !data[f])) { showToast('Missing required fields', 'error'); return false; }
+        return true;
+    }
+
+    function clearForm() {
+        document.getElementById('department-select').value = '';
+        document.getElementById('description-input').value = '';
+        resetDropdown(document.getElementById('section-select'), 'Select Section');
+        resetDropdown(document.getElementById('component-select'), 'Select Component');
+        resetDropdown(document.getElementById('component-section-select'), 'Select Component Section');
+        resetDropdown(document.getElementById('equipment-select'), 'Select Equipment');
+        
+        document.getElementById('technique-select').value = '';
+        
+        document.getElementById('sap-id-input').value = '';
+        document.getElementById('manual-sap-container').classList.add('hidden');
+        hideCustomInputsExcept('none');
+        setPriority('medium');
+    }
+
+    function setPriority(p) {
+        currentPriority = p;
+        document.querySelectorAll('.priority-btn').forEach(b => b.classList.remove('ring-2', 'ring-offset-2', 'scale-105'));
+        const btn = document.getElementById(`priority-${p}`);
+        if (btn) btn.classList.add('ring-2', 'ring-offset-2', 'scale-105');
+    }
+
+    // 9. NAVIGATION
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+        document.getElementById(id+'-page').classList.add('active');
+        document.getElementById('nav-'+id).classList.add('active');
+        
+        if(id==='notifications') {
+            populateNotificationFilterDepartments(); 
+            loadNotificationsPage();
+        }
+        if(id==='users') {
+            loadUsersList();
+        }
+        if (id==='dashboard') { 
+            populateFilterDepartments(); 
+            updateDashboardMetrics(); 
+            updateCharts(); 
+        }
+        if(window.innerWidth <= 768) { document.getElementById('main-sidebar').classList.remove('mobile-open'); document.getElementById('mobile-overlay').classList.remove('active'); }
+    }
+
+    function loadNotificationsPage() {
+        const list = document.getElementById('notifications-list'); 
+        list.innerHTML = '';
+        
+        let display = userRole==='user' ? notifications.filter(n=>n.userId===currentUser) : notifications;
+        
+        // Apply Filters
+        if(notificationFilters.department) display = display.filter(n => n.department === notificationFilters.department);
+        if(notificationFilters.status) display = display.filter(n => n.status === notificationFilters.status);
+        if (notificationFilters.dateFrom) { const fromDate = new Date(notificationFilters.dateFrom); display = display.filter(n => new Date(n.date) >= fromDate); }
+        if (notificationFilters.dateTo) { const toDate = new Date(notificationFilters.dateTo); display = display.filter(n => new Date(n.date) <= toDate); }
+        
+        display.forEach(n => {
+            const statusColors = {
+                'Open': 'bg-blue-100 text-blue-800',
+                'Planned': 'bg-purple-100 text-purple-800',
+                'Completed': 'bg-green-100 text-green-800',
+                'Rejected': 'bg-red-100 text-red-800'
+            };
+            const badgeColor = statusColors[n.status] || 'bg-gray-100 text-gray-800';
+
+            // --- DATE FORMATTING LOGIC ---
+            const targetDate = new Date(n.expectedFinishDate);
+            const isOverdue = targetDate < new Date() && n.status !== 'Completed' && n.status !== 'Rejected';
+            const dateColor = isOverdue ? 'text-red-600 font-bold' : 'text-gray-600';
+            const dateDisplay = n.expectedFinishDate ? targetDate.toLocaleDateString('en-GB') : 'No Date'; // en-GB gives DD/MM/YYYY
+
+            let controls = '';
+
+            // ... (Admin/Vendor Controls logic remains exactly the same as your current file) ...
+            // [Copy the Admin/Vendor IF/ELSE block from your existing code here if needed, 
+            // or use the block below which is standard based on our previous discussions]
+            
+            if (userRole === 'admin') {
+                const sopLink = SOP_URLS[n.technique] || '';
+                const sopButton = sopLink ? `<a href="${sopLink}" target="_blank" class="flex items-center gap-1 text-blue-600 hover:underline text-sm font-medium mt-1"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>Download SOP</a>` : '<span class="text-xs text-gray-400 mt-1 block">No SOP available</span>';
+                controls = `<div class="mt-4 pt-4 border-t bg-gray-50 p-3 rounded text-sm"><h4 class="font-bold text-gray-700 mb-2">Admin Actions</h4><div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-2"><select id="vendor-update-${n.id}" class="border rounded p-1 w-full"><option value="">Assign Vendor</option><option value="ACME" ${n.vendorAssigned==='ACME'?'selected':''}>ACME</option><option value="Quest" ${n.vendorAssigned==='Quest'?'selected':''}>Quest</option><option value="IU" ${n.vendorAssigned==='IU'?'selected':''}>IU</option></select><div class="flex items-center px-1">${sopButton}</div><input type="text" id="permit-update-${n.id}" placeholder="Permit No." value="${n.permitNumber}" class="border rounded p-1 w-full"></div><div class="flex gap-2"><select id="status-update-${n.id}" class="border rounded p-1"><option>Open</option><option>Planned</option><option>Completed</option><option>Rejected</option></select><input type="text" id="status-comment-${n.id}" placeholder="Comment required" class="border rounded p-1 flex-grow"><button onclick="updateJobStatus(${n.id})" class="bg-indigo-600 text-white px-3 rounded">Update</button></div></div>`;
+            } else if (userRole === 'vendor') {
+                const sopLink = SOP_URLS[n.technique] || '';
+                const sopBtn = sopLink ? `<a href="${sopLink}" target="_blank" class="text-blue-600 underline text-sm ml-2 font-bold">Download SOP 📥</a>` : '<span class="text-gray-400 text-sm ml-2">No SOP available</span>';
+                controls = `<div class="mt-4 pt-4 border-t bg-yellow-50 p-3 rounded text-sm"><h4 class="font-bold text-gray-700 mb-2">Vendor Actions</h4><div class="flex items-center gap-2 mb-2"><label class="font-medium">Permit:</label><input type="text" id="permit-update-${n.id}" value="${n.permitNumber}" placeholder="Enter Permit #" class="border rounded p-1 flex-grow"><button onclick="updateJobStatus(${n.id})" class="bg-green-600 text-white px-3 py-1 rounded">Save Permit</button></div><div class="flex items-center"><span class="font-medium">Documents:</span>${sopBtn}</div></div>`;
+            }
+
+            list.innerHTML += `
+            <div class="bg-white p-6 rounded-xl shadow border mb-4 relative overflow-hidden">
+                <div class="absolute left-0 top-0 bottom-0 w-1 ${n.priority === 'critical' ? 'bg-red-500' : n.priority === 'high' ? 'bg-orange-500' : 'bg-blue-500'}"></div>
+                
+                <div class="flex justify-between items-start mb-3 pl-2">
+                    <div>
+                        <h3 class="font-bold text-gray-800 text-lg">${n.department} - ${n.equipmentName}</h3>
+                        <div class="text-xs text-gray-500 mt-1 space-x-2">
+                            <span>🆔 ${n.dbId}</span>
+                            <span>•</span>
+                            <span class="${dateColor}">📅 Due: ${dateDisplay}</span>
+                            <span>•</span>
+                            <span>👷 Vendor: ${n.vendorAssigned || 'Unassigned'}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex flex-col items-end gap-2">
+                        <span class="px-2 py-1 rounded ${badgeColor} text-xs font-bold uppercase tracking-wider">${n.status}</span>
+                        <span class="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded border border-gray-200">${n.technique || 'General'}</span>
+                    </div>
+                </div>
+                
+                <div class="pl-2">
+                    <div class="text-sm text-gray-700 bg-gray-50 p-3 rounded mb-3 whitespace-pre-line border border-gray-100">
+                        ${n.description}
+                    </div>
+                    ${controls}
+                </div>
+            </div>`;
+        });
+    }
+
+    function exportToExcel() {
+        const ws = XLSX.utils.json_to_sheet(notifications);
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Jobs");
+        XLSX.writeFile(wb, "WorkOrders.xlsx");
+    }
+    
+    function toggleMobileMenu() { document.getElementById('main-sidebar').classList.toggle('mobile-open'); document.getElementById('mobile-overlay').classList.toggle('active'); }
+    
+    // Filter Handlers
+    function populateNotificationFilterDepartments() { 
+        const s = document.getElementById('notif-filter-department'); 
+        const d = [...new Set(notifications.map(n => n.department))]; 
+        const currentVal = s.value;
+        s.innerHTML = '<option value="">All Departments</option>' + d.map(x => `<option value="${x}">${x}</option>`).join('');
+        if(d.includes(currentVal)) s.value = currentVal;
+    }
+
+    function applyNotificationsFilters() { 
+        notificationFilters.department = document.getElementById('notif-filter-department').value; 
+        notificationFilters.status = document.getElementById('notif-filter-status').value;
+        notificationFilters.dateFrom = document.getElementById('notif-filter-date-from').value;
+        notificationFilters.dateTo = document.getElementById('notif-filter-date-to').value;
+        loadNotificationsPage(); 
+    }
+
+    function populateFilterDepartments() { 
+        const s = document.getElementById('filter-department'); 
+        const d = [...new Set(notifications.map(n => n.department))]; 
+        s.innerHTML = '<option value="">All Departments</option>' + d.map(x => `<option value="${x}">${x}</option>`).join(''); 
+    }
+    
+    function applyFilters() { 
+    dashboardFilters.status = document.getElementById('filter-status').value; 
+    dashboardFilters.priority = document.getElementById('filter-priority').value; 
+    dashboardFilters.department = document.getElementById('filter-department').value; 
+    
+    // ADDED THESE TWO LINES:
+    dashboardFilters.jobType = document.getElementById('filter-job-type').value;
+    dashboardFilters.dateRange = document.getElementById('filter-date-range').value;
+
+    updateDashboardMetrics(); 
+    updateCharts(); 
+}
+    
+    function clearFilters() { document.getElementById('filter-status').value = ''; document.getElementById('filter-priority').value = ''; document.getElementById('filter-department').value = ''; dashboardFilters = { status:'', priority:'', department:'' }; updateDashboardMetrics(); updateCharts(); }
+    
+    function clearNotificationsFilters() { 
+        document.getElementById('notif-filter-department').value = ''; 
+        document.getElementById('notif-filter-status').value = ''; 
+        document.getElementById('notif-filter-date-from').value = '';
+        document.getElementById('notif-filter-date-to').value = '';
+        notificationFilters = { department: '', status: '', dateFrom: '', dateTo: '' }; 
+        loadNotificationsPage(); 
+    }
+
+    // Init
+    document.addEventListener('DOMContentLoaded', async function() {
+        const savedUser = localStorage.getItem('currentUser');
+        const savedRole = localStorage.getItem('userRole');
+        
+        if (savedUser) {
+            currentUser = savedUser;
+            userRole = savedRole;
+            const { data } = await supabaseClient.auth.getSession();
+            if (data.session) {
+                initializeApp();
+            } else {
+                console.log('Session expired');
+            }
+        }
+    });
+  </script>
  </body>
 </html>
-
